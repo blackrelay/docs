@@ -31,7 +31,7 @@
   --sl-color-gray-4: #625a54;
   --sl-color-gray-5: #312b27;
   --sl-color-gray-6: #151210;
-  --sl-color-white: #000000;
+  --sl-color-white: #f4f1ec;
 }
 
 html {
@@ -45,6 +45,7 @@ body {
     radial-gradient(circle at 50% -8rem, rgba(254, 71, 0, 0.18), transparent 30rem),
     linear-gradient(180deg, rgba(254, 71, 0, 0.05), transparent 32rem),
     #000;
+  color: #f4f1ec;
 }
 
 body::before {
@@ -63,13 +64,81 @@ body::before {
 }
 
 a {
+  color: #ff8a63;
   text-decoration-color: rgba(254, 71, 0, 0.72);
   text-underline-offset: 0.2em;
+}
+
+.header,
+.sidebar-pane,
+.right-sidebar,
+.mobile-toc {
+  background: rgba(12, 9, 8, 0.96);
+  border-color: rgba(254, 71, 0, 0.16);
+}
+
+.site-title,
+.sl-markdown-content,
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6),
+.right-sidebar-panel h2 {
+  color: #f4f1ec;
+}
+
+.sl-markdown-content p,
+.sl-markdown-content li,
+.right-sidebar-panel a,
+.sidebar-content a,
+.sidebar-content summary,
+.sidebar-content .group-label {
+  color: #d7cec5;
+}
+
+.sl-markdown-content h1 {
+  color: #f4f1ec;
+  text-shadow: 0 0 22px rgba(254, 71, 0, 0.18);
+}
+
+.sidebar-content a[aria-current="page"] {
+  color: #000;
+}
+
+.sidebar-content .group-label,
+.sidebar-content .group-label .large,
+.sidebar-content summary .group-label,
+.sidebar-content summary > span {
+  color: #f4f1ec !important;
+}
+
+.sidebar-content a:not([aria-current="page"]):hover,
+.right-sidebar-panel a:hover {
+  color: #ff8a63;
+}
+
+.right-sidebar,
+.right-sidebar-container,
+.right-sidebar-panel,
+.mobile-toc,
+starlight-theme-select {
+  display: none !important;
+}
+
+.header button,
+.header select,
+.search-input {
+  color: #f4f1ec;
+  border-color: rgba(254, 71, 0, 0.22);
+  background-color: rgba(0, 0, 0, 0.78);
+}
+
+.search-input::placeholder {
+  color: #9b928a;
 }
 
 code,
 pre {
   border: 1px solid rgba(254, 71, 0, 0.18);
+  background-color: rgba(17, 10, 7, 0.92);
+  color: #f4f1ec;
 }
 
 .hero > img {
@@ -89,6 +158,7 @@ pre {
 }
 
 .sl-markdown-content :is(h1, h2, h3) {
+  color: #f4f1ec;
   letter-spacing: 0.01em;
 }
 

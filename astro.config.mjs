@@ -14,6 +14,12 @@ export default defineConfig({
         "Reference documentation for the Black Relay public API and Registry export surface.",
       customCss: ["./src/styles/starlight.css"],
       favicon: "/logo.png",
+      components: {
+        ThemeProvider: "./src/components/Empty.astro",
+        ThemeSelect: "./src/components/Empty.astro",
+        TableOfContents: "./src/components/Empty.astro",
+        MobileTableOfContents: "./src/components/Empty.astro",
+      },
       editLink: {
         baseUrl: "https://github.com/blackrelay/docs/edit/main/",
       },
@@ -39,10 +45,6 @@ export default defineConfig({
           ],
         },
       ],
-      tableOfContents: {
-        minHeadingLevel: 2,
-        maxHeadingLevel: 3,
-      },
     }),
   ],
 });

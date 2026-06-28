@@ -1,0 +1,42 @@
+---
+import config from "virtual:starlight/user-config";
+import { Icon } from "@astrojs/starlight/components";
+
+const links = config.social || [];
+---
+
+<a href="https://blackrelay.network" class="sl-flex" aria-label="Black Relay home">
+  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path
+      d="M3.2 10.9 12 3.6l8.8 7.3a1 1 0 0 1-1.28 1.54L19 12v7a2 2 0 0 1-2 2h-3.5a1 1 0 0 1-1-1v-4h-1v4a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2v-7l-.52.44A1 1 0 1 1 3.2 10.9ZM7 10.35V19h2.5v-4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v4H17v-8.65l-5-4.17-5 4.17Z"
+    />
+  </svg>
+</a>
+
+{
+  links.map(({ label, href, icon }) => (
+    <a {href} rel="me" class="sl-flex">
+      <span class="sr-only">{label}</span>
+      <Icon name={icon} />
+    </a>
+  ))
+}
+
+<style>
+  @layer starlight.core {
+    a {
+      color: var(--sl-color-text-accent);
+      padding: 0.5em;
+      margin: -0.5em;
+    }
+
+    a:hover {
+      color: var(--sl-color-white);
+    }
+
+    svg {
+      width: 1em;
+      height: 1em;
+    }
+  }
+</style>

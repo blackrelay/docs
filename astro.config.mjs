@@ -39,6 +39,7 @@ export default defineConfig({
       components: {
         ThemeProvider: "./src/components/Empty.astro",
         ThemeSelect: "./src/components/Empty.astro",
+        SocialIcons: "./src/components/SocialIcons.astro",
         TableOfContents: "./src/components/Empty.astro",
         MobileTableOfContents: "./src/components/Empty.astro",
       },

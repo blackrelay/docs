@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro check && astro build && node scripts/disable-rocket-loader.mjs",
     "preview": "astro preview",
     "search:preview": "pnpm build && astro preview --host 127.0.0.1 --port 4329",
     "check": "astro check",

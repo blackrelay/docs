@@ -1,0 +1,159 @@
+---
+title: Sui CLI And GraphQL
+description: Practical read, inspect and debug workflows for Sui-backed EVE Frontier tools.
+---
+
+Sui tooling is the ground truth when a Frontier tool needs exact object state, package metadata, transaction effects or a pre-signing check.
+
+Use Black Relay for public labels and indexed discovery. Use Sui CLI, GraphQL, gRPC or SDK calls when correctness depends on the current chain state.
+
+## Choose The Read Path
+
+Need | First Tool
+--- | ---
+Inspect one object manually. | Sui CLI or an explorer.
+Query objects by owner or type. | Sui GraphQL.
+Read transaction effects or events. | Sui GraphQL, JSON-RPC or SDK.
+Stream large checkpoint/event ranges. | gRPC or a purpose-built indexer.
+Build a public UI list. | Registry/API first, direct Sui on detail or mutation.
+Build a transaction. | Sui SDK, dApp Kit or official scripts.
+
+The official builder docs describe the split as a write path through Move public functions and a read path through GraphQL, gRPC or custom indexers.
+
+## CLI Setup Checks
+
+After installing Sui, confirm the client is usable before debugging Frontier code:
+```sh
+sui --version
+sui client active-env
+sui client envs
+sui client active-address
+```
+
+Windows:
+```powershell
+sui --version
+sui client active-env
+sui client envs
+sui client active-address
+```
+
+If the active environment is wrong, fix that before testing package ids or object ids.
+
+## Environment Checklist
+
+Record these values per environment:
+
+Value | Why It Matters
+--- | ---
+Sui network | Object ids, packages and checkpoints are network-specific.
+RPC endpoint | CLI and SDK calls depend on it.
+GraphQL endpoint | Object and event queries depend on it.
+World package id | Move target strings depend on it.
+Published-at package id | Upgraded packages can require canonical type resolution.
+Character id | Owner capabilities commonly live through the character object.
+Wallet address | EVE Vault and direct Sui reads use the address.
+
+Do not paste private keys into docs, issue reports or screenshots.
+
+## Object Inspection
+
+Use direct object inspection when a UI label or Registry row is not enough.
+
+Typical questions:
+- does this object exist?
+- what version is current?
+- who owns it?
+- what Move type does it have?
+- what fields are exposed as JSON?
+- did a transaction update it?
+
+Keep the raw object id and transaction digest in debugging notes. Display names are not enough.
+
+## GraphQL Object Query Pattern
+
+Use GraphQL when you need to query by type, owner or cursor.
+
+The official docs show this shape for object-by-type reads:
+```graphql
+query GetObjectsByType($type: String!, $first: Int) {
+  objects(filter: { type: $type }, first: $first) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      address
+      asMoveObject {
+        contents {
+          json
+        }
+      }
+    }
+  }
+}
+```
+
+Use the correct world package id for the environment. Do not copy a type string from another cycle or network without checking package lineage.
+
+## Character By Wallet Pattern
+
+The official builder docs describe a `PlayerProfile` object owned by the wallet. Querying wallet-owned objects by the `PlayerProfile` type can reveal the character id.
+
+Practical flow:
+
+1. user connects with EVE Vault
+2. app reads connected Sui address
+3. server or client queries for the environment-specific `PlayerProfile` type
+4. app resolves the character id
+5. app fetches the character object or uses Registry/API for display context
+6. mutation logic still checks live object state before signing
+
+Do not treat a connected wallet address as proof of every owner capability. Capability checks are contract-level checks.
+
+## Event Query Pattern
+
+For event debugging, query by module or exact Move event type where supported.
+
+Useful Frontier event families include:
+
+Module | Common Interest
+--- | ---
+`character` | character creation/profile identity evidence
+`assembly` | assembly deployment or state changes
+`gate` | route and jump evidence
+`storage_unit` | deposit and withdrawal evidence
+`inventory` | item movement evidence
+`turret` | defensive state and targeting evidence
+`rift` | rift spawn and location evidence
+`killmail` | combat records
+
+For broad backfills, store cursors and retry safely. For UI reads, query narrow filters or use Black Relay export data.
+
+## Before Building A Transaction
+
+Before asking EVE Vault or another wallet path to sign:
+
+1. re-read the target object
+2. confirm object version
+3. confirm package id and function target
+4. confirm owner/capability requirements
+5. confirm item type ids and quantities
+6. dry-run or dev-inspect if your tooling supports it
+7. show the player the exact effect in plain language
+
+Registry data can make the display readable. It should not be the final pre-signing authority.
+
+## When Black Relay Belongs
+
+Use Black Relay after you know what you are trying to read:
+
+Direct Source Result | Black Relay Adds
+--- | ---
+raw type id | display name, source and confidence
+object id | entity page, related facts and sources
+system id | system name, region, constellation and coordinates where sourced
+killmail ids | resolved participant names where available
+event cursor | export freshness and source coverage context
+
+That order keeps transaction correctness anchored to Sui while still giving users readable context.

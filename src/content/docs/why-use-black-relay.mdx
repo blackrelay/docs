@@ -1,0 +1,106 @@
+---
+title: Why Use Black Relay
+description: When the Black Relay public read layer is useful and when direct Frontier sources are still the right tool.
+---
+
+Black Relay is not the first tool for every Frontier problem.
+
+Use official contracts, EVE Vault, Sui CLI, GraphQL, dApp Kit and live object reads when you are building, signing, sponsoring, publishing or mutating state.
+
+Use Black Relay when the problem is public read data:
+- what is this system?
+- what does this type ID mean?
+- what source backs this name?
+- what public killmail records exist?
+- what public route or gate records are indexed?
+- how fresh is the public export?
+
+## The Data Problem
+
+Useful Frontier data is spread across several places:
+- public Sui objects and events
+- World API snapshots
+- static-client data
+- source artefacts and extraction output
+- reviewed public correction work
+
+Each source has a different failure mode. Chain data is durable but expensive to backfill. World API data can resolve current public identity but may not preserve old cycle context. Static-client data is broad but extraction and normalisation change as the client changes. Community reports are useful only when their source and confidence are clear.
+
+Black Relay is the shared public read layer built from those sources:
+```text
+public sources -> Registry pipeline -> R2 exports + D1 query index -> api.blackrelay.network
+```
+
+That means a public tool can start with indexed source-aware records instead of immediately operating:
+- a Sui event backfiller
+- a Sui object scanner
+- a PostgreSQL Registry database
+- a Cloudflare D1 import pipeline
+- static-client binary extraction
+- source artefact hashing
+- source-confidence review workflows
+- public export generation
+- pagination and current-state normalisers
+
+## What It Is Good For
+
+Need                                          | Black Relay Surface
+--------------------------------------------- | --------------------------------------------------------
+Searchable public identities                  | `/v1/search`, `/v1/entities`
+Current characters, tribes and infrastructure | `/v1/current/{collection}`
+Static systems, items, enemies and structures | `/v1/current/systems`, `/v1/types`, `/v1/current/items`
+Combat data                                   | `/v1/killmails`
+Raw public event context                      | `/v1/events`
+Provenance                                    | facts, relations, sources and artefacts
+Freshness and coverage checks                 | `/v1/ready`, `/v1/ops/freshness`, `/v1/ops/sui-coverage`
+Bulk distribution                             | `/v1/exports/{file}`
+
+## Why It Can Save Work
+
+Direct Sui indexing is not a single request. You have to discover packages, shard by module, page events, handle cursor persistence, avoid reimporting old pages, detect provider range issues, derive semantic records and keep the current state clean. You also need enough storage to preserve raw evidence.
+
+Static-client extraction is also not a small task. Names, type IDs, group IDs, systems, constellations, regions, routes, recipes and blueprints live in client data that needs deterministic extraction and careful normalisation. A small app that only wants to show "what is this item?" should not need to reverse engineer the client before it can render a label.
+
+The public API moves much of that read-side cost into one shared public data layer.
+
+## Why It Can Be More Convenient
+
+Black Relay tries to expose data in the shape tools actually need:
+- default environment is `stillness`
+- default cycle is the current cycle
+- list routes paginate consistently
+- entity IDs can be resolved by id or slug
+- current-state routes avoid forcing clients to rebuild state from raw events
+- static names are normalised before display where possible
+- sources and confidence labels stay attached to claims
+
+This is convenience, not authority. Use direct chain, World API or client extraction when you need immediate settlement data, private operational latency, write-path transaction construction or final pre-signing truth.
+
+## Good Fit
+
+Black Relay is a good fit for:
+- public explorers
+- route and system lookups
+- material and item lookup tools
+- killmail viewers
+- Discord lookup bots
+- field manuals
+- dashboards that tolerate export freshness
+- dApps that need display names, labels and source context
+
+## Poor Fit
+
+Use the chain or World API directly when:
+- you are about to submit a transaction
+- you need a wallet signature or sponsored transaction flow
+- you need the latest object version before mutation
+- you need private player state that is not public Registry data
+- you need a stronger guarantee than a public export can provide
+
+Black Relay is a public data spine, not a signer, wallet, transaction builder, live object authority or replacement for on-chain validation.
+
+## Practical Rule
+
+Use Black Relay to make public information readable and source-aware.
+
+Use direct Frontier and Sui tooling to prove live state, build transactions and protect assets.

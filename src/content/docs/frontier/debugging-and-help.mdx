@@ -1,0 +1,112 @@
+---
+title: Debugging And Help
+description: A practical debugging checklist for EVE Frontier builders.
+---
+
+Most Frontier debugging failures come from mixing environments, package ids, object ids, display names and wallet state.
+
+Start by proving the boundary that failed.
+
+## First Triage
+
+Symptom | First Check
+--- | ---
+Object not found | Wrong network, stale object id or wrong package lineage.
+Transaction fails | Re-read object version, owner capability and package target.
+Wallet connects but character is missing | Check `PlayerProfile` lookup and EVE Vault connection state.
+Name is unresolved | Check whether the value is static-client, World API or Registry-derived.
+Route looks wrong | Check system ids, route edges and coordinates separately.
+Event index misses rows | Check package id, module filter, cursor and provider retention.
+dApp works outside game but not in-game | Check `tenant`, `itemId`, frame context and extension availability.
+
+Do not debug from a display name first. Debug from object id, type id, system id, transaction digest or event id.
+
+## Minimum Debug Record
+
+When asking for help, collect:
+- environment
+- Sui network
+- world package id
+- function target or event type
+- object id
+- transaction digest
+- expected behaviour
+- actual error
+- whether it fails before signing, during signing, after submission or during indexing
+
+Redact private keys, session tokens, cookies and private operational data.
+
+## Environment Drift
+
+Many failures are caused by environment drift:
+- Utopia vs Stillness
+- old package id vs current package id
+- localnet object id copied into testnet
+- testnet GraphQL endpoint used with a mainnet object
+- World API current state compared with historical chain data
+- old static-client extraction used after a patch
+
+Keep an environment block in each project:
+```text
+environment = stillness
+sui_network = testnet
+world_package = 0x...
+current_cycle = 6
+static_client_build = ...
+```
+
+Do not keep those values only in screenshots or chat.
+
+## Transaction Debugging
+
+Before changing code, answer these questions:
+
+1. did the wallet connect to the expected address?
+2. does that address resolve to the expected character?
+3. does the character hold the required `OwnerCap`?
+4. is the target object current?
+5. is the target package id current?
+6. are all item type ids correct?
+7. does the transaction use the right gas owner or sponsor path?
+8. does a dry-run or dev-inspect fail earlier than the live submission?
+
+If the failure is a Move abort, inspect the module and function that aborted. Do not paper over it with a generic UI message.
+
+## Indexer Debugging
+
+For indexers:
+
+1. log package id, module and event type
+2. persist cursor after successful writes
+3. make writes idempotent
+4. handle empty pages
+5. store raw event payloads before normalising
+6. track provider range errors separately from parser errors
+7. expose freshness and cursor lag
+8. replay from a known checkpoint in a test database before rewriting production state
+
+If you cannot prove that a row came from a public source, do not publish it as verified Registry data.
+
+## UI Debugging
+
+For public explorers and dApps:
+- show unresolved values as unresolved
+- keep IDs copyable on detail views
+- keep raw source links reachable
+- display freshness near operational data
+- do not hide source gaps by filling with guesses
+- do not use a stale export to decide whether to move assets
+
+Use Black Relay for source-aware labels. Use direct Sui reads for final transaction state.
+
+## Where To Look Next
+
+Problem | Page
+--- | ---
+Toolchain setup | [Environment And Identity](environment-and-identity/)
+Direct reads | [Sui CLI And GraphQL](sui-cli-graphql/)
+Package ids | [World Upgrades](world-upgrades/)
+Assembly extensions | [Smart Assemblies](smart-assemblies/)
+Storage logic | [Programmable SSUs](programmable-ssus/)
+Static-client fields | [Static Client Data](static-client-data/)
+Data boundaries | [Source Map](../source-map/)

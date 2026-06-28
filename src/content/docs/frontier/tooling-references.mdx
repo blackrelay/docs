@@ -1,0 +1,117 @@
+---
+title: Tooling And References
+description: Builder scaffold, world contracts, dApp kit, Sui reads and static-client tooling.
+---
+
+Frontier builders usually combine several tools. Pick the tool for the boundary you are working on.
+
+## Common Tooling
+
+Tool Or Source | Use It For | Notes
+--- | --- | ---
+Builder scaffold | Local build flow, example Move packages and TypeScript scripts. | Useful first path for publishing and calling an extension.
+World contracts | Contract source, module names, event shapes and access patterns. | Read before writing extension logic.
+dApp kit | Wallet connection, assembly data hooks and sponsored transaction helpers. | Useful for React dApps that need wallet-facing UX.
+Sui CLI | Local keys, package publishing, object inspection and transaction debugging. | Keep environment and package IDs explicit.
+Sui GraphQL or gRPC | Direct read path for objects, events and owner queries. | Use before signing or when API freshness is not enough.
+Static-client extractors | Types, systems, routes, recipes and names. | Useful for Registry importers; most tools should consume the API instead.
+
+## Builder Scaffold
+
+The builder scaffold is the practical starting point when you want to deploy and call a custom extension. It includes:
+- Move contract examples
+- TypeScript transaction scripts
+- world setup support
+- helper functions for object ID derivation
+- smart gate extension examples
+- storage unit and gate helper scripts
+
+Use it when you want to understand the full loop:
+```text
+deploy world or connect to world
+publish extension package
+configure extension rules
+authorise extension on assembly
+call extension from script or dApp
+```
+
+## World Contracts
+
+Read the world contracts when you need truth about:
+- module names
+- type names
+- function signatures
+- event structures
+- capability requirements
+- witness or extension patterns
+- object and ownership relationships
+
+Docs can explain the shape but the contract source is the authority for how a transaction must be built.
+
+## dApp Kit
+
+The dApp kit is useful when your project is a browser dApp that needs:
+- wallet connection
+- assembly data hooks
+- transaction signing
+- sponsored transaction helpers
+- user-facing notifications
+
+If your project is a server-side indexer or static exporter, the dApp kit may be unnecessary. Use Sui SDK, GraphQL, gRPC or Black Relay exports instead.
+
+## Static-Client Tooling
+
+Static-client tools are useful when building Registry importers or validating a patch:
+- FrontierData-style extraction can produce broad systems, blueprints and type data.
+- Phobos-style extraction can expose universe and type containers.
+- Registry native importers should preserve artefacts and compare semantic rows.
+
+For most public read tools, static-client extraction is too much operational work to run as a first step. Use an existing public read layer when it fits the task; run the Registry importer yourself when you need to audit or reproduce the import pipeline.
+
+## Direct Sui Reads
+
+Use direct Sui reads for exact current state:
+- object version before mutation
+- wallet-owned objects
+- owner capability discovery
+- transaction event inspection
+- package module inspection
+
+Use Black Relay for public labels, search and provenance. Use Sui for final transaction correctness.
+
+For practical command and query workflow advice, see [Sui CLI And GraphQL](sui-cli-graphql/). For endpoint and project links, see [Reference Links](reference-links/). For failure triage, see [Debugging And Help](debugging-and-help/).
+
+## Where Black Relay Fits
+
+Black Relay is not a common Frontier development tool in the same sense as the Sui CLI, the builder scaffold or contract source. It is the shared public read layer produced by the Registry pipeline.
+
+Use the public API when a tool needs:
+- source-aware labels
+- entity search
+- current public state
+- killmail and event views
+- type, system, route or enemy display data
+- provenance links
+- export freshness and coverage status
+
+Use [blackrelay/registry](https://github.com/blackrelay/registry) when you need to run the canonical import pipeline yourself. Registry releases are published at [github.com/blackrelay/registry/releases/latest](https://github.com/blackrelay/registry/releases/latest) and include the command-line tools that decode local static-client evidence, import reviewed artefacts, derive current state and publish export bundles.
+
+The split is deliberate:
+
+Need | Use
+--- | ---
+Build or publish a Move extension. | Builder scaffold, Sui CLI and world contracts.
+Sign or sponsor a transaction. | Wallet, dApp kit, Sui SDK and direct chain reads.
+Decode local static-client files. | Registry importer commands.
+Query public normalised data. | Black Relay API.
+Audit where a public claim came from. | Registry source, artefact and export records.
+
+## External References
+
+Useful public references:
+- EVE Frontier builder documentation in the local `public/evefrontier` mirror.
+- EVE Frontier world contracts source.
+- Sui documentation for Move, objects, GraphQL and gRPC.
+- Community static-client tools under the local `public/community` mirror.
+
+These references do not all have the same authority. Prefer official contract source for transaction behaviour and use community tooling as working guidance that still needs verification.

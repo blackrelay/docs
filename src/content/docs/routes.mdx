@@ -7,140 +7,181 @@ All routes are read-only.
 
 ## Service
 
-| Route | Description |
-| --- | --- |
-| `/v1` | API root document with advertised routes and defaults. |
-| `/v1/health` | Worker health check. |
-| `/v1/ready` | D1 and R2 manifest readiness check. |
-| `/v1/metrics` | Prometheus-style text metrics. |
-| `/metrics` | Prometheus-style text metrics alias. |
+Route | Description
+--- | ---
+`/v1` | API root document with advertised routes and defaults.
+`/v1/health` | Worker health check.
+`/v1/ready` | D1 and R2 manifest readiness check.
+`/v1/metrics` | Prometheus-style text metrics.
+`/metrics` | Prometheus-style text metrics alias.
 
 ## Search And Entities
 
-| Route | Description |
-| --- | --- |
-| `/v1/search` | Alias for entity search with query filters. |
-| `/v1/entities` | Entity list across all entity types. |
-| `/v1/entities/{idOrSlug}` | Entity detail by id or slug. |
-| `/v1/entities/{idOrSlug}/facts` | Source-backed facts for an entity. |
-| `/v1/entities/{idOrSlug}/relations` | Relations where the entity is subject or object. |
-| `/v1/entities/{idOrSlug}/sources` | Sources linked to the entity. |
-| `/v1/entities/{idOrSlug}/history` | Entity detail with facts, relations and sources. |
+Route | Description
+--- | ---
+`/v1/search` | Alias for entity search with query filters.
+`/v1/entities` | Entity list across all entity types.
+`/v1/entities/{idOrSlug}` | Entity detail by id or slug.
+`/v1/entities/{idOrSlug}/facts` | Source-backed facts for an entity.
+`/v1/entities/{idOrSlug}/relations` | Relations where the entity is subject or object.
+`/v1/entities/{idOrSlug}/sources` | Sources linked to the entity.
+`/v1/entities/{idOrSlug}/history` | Entity detail with facts, relations and sources.
+
+Use entity routes when you need canonical identity and provenance. Use current collection routes when you need an explorer-friendly table for one domain.
 
 ## Static Types
 
-| Route | Description |
-| --- | --- |
-| `/v1/types` | Static-client-backed entities. |
-| `/v1/types/{typeID}` | Static type lookup by type id. |
+Route | Description
+--- | ---
+`/v1/types` | Static-client-backed entities.
+`/v1/types/{typeID}` | Static type lookup by type id.
 
 ## Current Collections
 
-| Route | Description |
-| --- | --- |
-| `/v1/current/characters` | Current character records. |
-| `/v1/current/tribes` | Current tribe records. |
-| `/v1/current/assemblies` | Current assembly records. |
-| `/v1/current/gates` | Current gate records. |
-| `/v1/current/storage` | Current storage unit records. |
-| `/v1/current/turrets` | Current turret records. |
-| `/v1/current/regions` | Current region records. |
-| `/v1/current/constellations` | Current constellation records. |
-| `/v1/current/items` | Current item records. |
-| `/v1/current/materials` | Current material records. |
-| `/v1/current/enemies` | Current enemy records from static-client evidence. |
-| `/v1/current/recipes` | Current recipe records. |
-| `/v1/current/blueprints` | Current blueprint records. |
-| `/v1/current/ships` | Current ship records. |
-| `/v1/current/structures` | Current structure records. |
-| `/v1/current/systems` | Current system records. |
-| `/v1/current/routes` | Current route records. |
-| `/v1/current/ownership` | Current ownership relation records. |
-| `/v1/current/route-edges` | Current route edge records. |
+Route | Description
+--- | ---
+`/v1/current/characters` | Current character records.
+`/v1/current/tribes` | Current tribe records.
+`/v1/current/assemblies` | Current assembly records.
+`/v1/current/gates` | Current gate records.
+`/v1/current/storage` | Current storage unit records.
+`/v1/current/turrets` | Current turret records.
+`/v1/current/regions` | Current region records.
+`/v1/current/constellations` | Current constellation records.
+`/v1/current/items` | Current item records.
+`/v1/current/materials` | Current material records.
+`/v1/current/enemies` | Current enemy records from static-client evidence.
+`/v1/current/recipes` | Current recipe records.
+`/v1/current/blueprints` | Current blueprint records.
+`/v1/current/ships` | Current ship records.
+`/v1/current/structures` | Current structure records.
+`/v1/current/systems` | Current system records.
+`/v1/current/routes` | Current route records.
+`/v1/current/ownership` | Current ownership relation records.
+`/v1/current/route-edges` | Current route edge records.
+
+The generic form is also supported:
+```text
+GET /v1/current/{collection}
+```
+
+Use the explicit route names in documentation and bookmarks. Use the generic form when you are building a client that switches collections from a controlled allowlist.
 
 ## Typed Entity Collections
 
-| Route | Description |
-| --- | --- |
-| `/v1/characters` | Character entities. |
-| `/v1/characters/{idOrSlug}` | Character detail. |
-| `/v1/tribes` | Tribe entities. |
-| `/v1/tribes/{idOrSlug}` | Tribe detail. |
-| `/v1/assemblies` | Assembly entities. |
-| `/v1/assemblies/{idOrSlug}` | Assembly detail. |
-| `/v1/gates` | Gate entities. |
-| `/v1/gates/{idOrSlug}` | Gate detail. |
-| `/v1/regions` | Region entities. |
-| `/v1/regions/{idOrSlug}` | Region detail. |
-| `/v1/constellations` | Constellation entities. |
-| `/v1/constellations/{idOrSlug}` | Constellation detail. |
-| `/v1/systems` | System entities. |
-| `/v1/systems/{idOrSlug}` | System detail. |
-| `/v1/items` | Item entities. |
-| `/v1/items/{idOrSlug}` | Item detail. |
-| `/v1/materials` | Material entities. |
-| `/v1/materials/{idOrSlug}` | Material detail. |
-| `/v1/enemies` | Enemy entities. |
-| `/v1/enemies/{idOrSlug}` | Enemy detail. |
-| `/v1/recipes` | Recipe entities. |
-| `/v1/recipes/{idOrSlug}` | Recipe detail. |
-| `/v1/blueprints` | Blueprint entities. |
-| `/v1/blueprints/{idOrSlug}` | Blueprint detail. |
-| `/v1/ships` | Ship entities. |
-| `/v1/ships/{idOrSlug}` | Ship detail. |
-| `/v1/structures` | Structure entities. |
-| `/v1/structures/{idOrSlug}` | Structure detail. |
+Route | Description
+--- | ---
+`/v1/characters` | Character entities.
+`/v1/characters/{idOrSlug}` | Character detail.
+`/v1/tribes` | Tribe entities.
+`/v1/tribes/{idOrSlug}` | Tribe detail.
+`/v1/assemblies` | Assembly entities.
+`/v1/assemblies/{idOrSlug}` | Assembly detail.
+`/v1/gates` | Gate entities.
+`/v1/gates/{idOrSlug}` | Gate detail.
+`/v1/regions` | Region entities.
+`/v1/regions/{idOrSlug}` | Region detail.
+`/v1/constellations` | Constellation entities.
+`/v1/constellations/{idOrSlug}` | Constellation detail.
+`/v1/systems` | System entities.
+`/v1/systems/{idOrSlug}` | System detail.
+`/v1/items` | Item entities.
+`/v1/items/{idOrSlug}` | Item detail.
+`/v1/materials` | Material entities.
+`/v1/materials/{idOrSlug}` | Material detail.
+`/v1/enemies` | Enemy entities.
+`/v1/enemies/{idOrSlug}` | Enemy detail.
+`/v1/recipes` | Recipe entities.
+`/v1/recipes/{idOrSlug}` | Recipe detail.
+`/v1/blueprints` | Blueprint entities.
+`/v1/blueprints/{idOrSlug}` | Blueprint detail.
+`/v1/ships` | Ship entities.
+`/v1/ships/{idOrSlug}` | Ship detail.
+`/v1/structures` | Structure entities.
+`/v1/structures/{idOrSlug}` | Structure detail.
+
+Typed entity collections are aliases over entity search filtered by entity type. They are useful when you need canonical entity rows but do not need the derived current-state shape.
+
+Current collections and typed collections can both be valid for the same domain:
+
+Need | Route Style
+--- | ---
+Explorer table of current systems. | `/v1/current/systems`
+Canonical system entity detail. | `/v1/systems/{idOrSlug}`
+Source-backed facts for a system. | `/v1/entities/{idOrSlug}/facts`
+Relations for a gate, character or tribe. | `/v1/entities/{idOrSlug}/relations`
 
 ## Events And Killmails
 
-| Route | Description |
-| --- | --- |
-| `/v1/events` | On-chain event rows indexed from public Registry exports. |
-| `/v1/events/{id}` | Event detail. |
-| `/v1/killmails` | Semantic killmail records. |
-| `/v1/killmails/{id}` | Killmail detail. |
-| `/v1/killmails/{id}/raw` | Raw killmail payload where available. |
+Route | Description
+--- | ---
+`/v1/events` | On-chain event rows indexed from public Registry exports.
+`/v1/events/{id}` | Event detail.
+`/v1/killmails` | Semantic killmail records.
+`/v1/killmails/{id}` | Killmail detail.
+`/v1/killmails/{id}/raw` | Raw killmail payload where available.
 
 ## Sources, Artefacts And Operations
 
-| Route | Description |
-| --- | --- |
-| `/v1/sources` | Source list. |
-| `/v1/sources/{id}` | Source detail. |
-| `/v1/artefacts/{id}` | Source artefact detail. |
-| `/v1/ops/freshness` | Export freshness document. |
-| `/v1/ops/cursors` | Indexer cursor document. |
-| `/v1/ops/sui-coverage` | Sui coverage and blocked-range document. |
-| `/v1/ops/source-gaps` | Known source gaps. |
-| `/v1/exports/{file}` | Public export object from R2. |
+Route | Description
+--- | ---
+`/v1/sources` | Source list.
+`/v1/sources/{id}` | Source detail.
+`/v1/artefacts/{id}` | Source artefact detail.
+`/v1/ops/freshness` | Export freshness document.
+`/v1/ops/cursors` | Indexer cursor document.
+`/v1/ops/sui-coverage` | Sui coverage and blocked-range document.
+`/v1/ops/source-gaps` | Known source gaps.
+`/v1/exports/{file}` | Public export object from R2.
 
 ## Common Query Parameters
 
-| Parameter | Routes | Description |
-| --- | --- | --- |
-| `environment` | Most list routes | Defaults to `stillness`. |
-| `cycle` | List routes | Legacy singular cycle filter. Prefer `cycles`. |
-| `cycles` | List routes | `current` or `6`. |
-| `q` | Entity, search and current routes | Case-insensitive search over indexed search text. |
-| `limit` | Paginated routes | Defaults to `50`, maximum `200`. |
-| `cursor` | Paginated routes | Opaque pagination cursor from `nextCursor`. |
+Parameter | Routes | Description
+--- | --- | ---
+`environment` | Most list routes | Defaults to `stillness`.
+`cycle` | List routes | Legacy singular cycle filter. Prefer `cycles`.
+`cycles` | List routes | `current` or `6`.
+`q` | Entity, search and current routes | Case-insensitive search over indexed search text.
+`limit` | Paginated routes | Defaults to `50`, maximum `200`.
+`cursor` | Paginated routes | Opaque pagination cursor from `nextCursor`.
+
+Use `cycles=current` unless you have a specific reason to pin the current cycle number. The public API currently exposes current-cycle data only.
+
+Do not pass arbitrary collection names from user input directly into `/v1/current/{collection}` or `/v1/{typedCollection}`. Keep a local allowlist of supported collection names.
 
 ## Event Filters
 
-| Parameter | Description |
-| --- | --- |
-| `kind` | Event kind. |
-| `module` | Move module name. |
-| `package_id` | Sui package id. |
-| `transaction_digest` | Sui transaction digest. |
-| `source_id` | Registry source id. |
+Parameter | Description
+--- | ---
+`kind` | Event kind.
+`module` | Move module name.
+`package_id` | Sui package id.
+`transaction_digest` | Sui transaction digest.
+`source_id` | Registry source id.
 
 ## Killmail Filters
 
-| Parameter | Description |
-| --- | --- |
-| `system` | System id. |
-| `victim` | Victim character id. |
-| `killer` | Killer character id or explicit killer static type id. |
-| `reporter` | Reporter character id. |
-| `npc` | `true` for NPC/enemy killmails, `false` for player-character killmails. |
+Parameter | Description
+--- | ---
+`system` | System id.
+`victim` | Victim character id.
+`killer` | Killer character id or explicit killer static type id.
+`reporter` | Reporter character id.
+`npc` | `true` for NPC/enemy killmails, `false` for player-character killmails.
+
+## Example Route Choices
+
+Task | Route
+--- | ---
+Find a character by name. | `/v1/search?q=<name>`
+Show current character rows. | `/v1/current/characters?limit=50`
+Show a killmail table. | `/v1/killmails?limit=50`
+Fetch raw event context for a killmail. | `/v1/events?module=killmail&limit=20`
+Build a route graph. | `/v1/current/systems` plus `/v1/current/route-edges`
+Resolve an item type id. | `/v1/types/{typeID}`
+Check export freshness. | `/v1/ops/freshness`
+Download bulk rows. | `/v1/exports/{file}`
+
+## Route Stability
+
+The `v1` prefix is the public compatibility boundary. New fields may be added to response objects. Clients should ignore unknown fields and avoid depending on object key order.

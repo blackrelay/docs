@@ -1,0 +1,237 @@
+---
+title: Development Workflows
+description: Practical end-to-end patterns for Frontier explorers, dApps, Smart Assembly extensions and data pipelines.
+---
+
+Frontier development is easier when each workflow has a clear authority boundary.
+
+Use this page as a build map. It does not replace the official contracts or builder scaffold; it explains how to combine them with Black Relay's public read API.
+
+## Workflow Matrix
+
+Workflow | Use Black Relay For | Use Direct Sui Or Official Tooling For
+--- | --- | ---
+Public explorer | Search, names, systems, routes, killmails, sources. | Nothing unless you need live proof beyond the export.
+Route planner | Systems, coordinates, static jump graph, route edges. | Custom path-finding and risk rules.
+dApp attached to an assembly | Labels, source-backed context, related public records. | Wallet connection, object version checks, transaction building.
+Smart Storage Unit extension | Item names, storage-unit discovery, source context. | Extension Move logic, `OwnerCap`, inventory mutation.
+Smart Gate extension | Gate labels, route context, public linked-gate data. | Permit issuance, jump transaction, owner authorisation.
+Turret extension | Turret discovery, enemy type labels where sourced. | Target policy, online receipt handling, authorised calls.
+Indexer or mirror | Export files, manifest hashes, source artefacts. | Local storage, diffing, validation and monitoring.
+
+## Read-Only Explorer
+
+A read-only explorer should start with the public API:
+```text
+/v1/search
+/v1/current/{collection}
+/v1/entities/{idOrSlug}
+/v1/entities/{idOrSlug}/facts
+/v1/entities/{idOrSlug}/relations
+/v1/entities/{idOrSlug}/sources
+```
+
+Recommended client flow:
+
+1. call `/v1/ready`
+2. call `/v1/ops/freshness` for the status panel
+3. load collection counts or the first page of a current collection
+4. follow `nextCursor` for more pages
+5. fetch entity history only when the user opens a detail page
+6. show unresolved values explicitly
+
+Use list routes for UI pages. Use `/v1/exports/{file}` when you want an offline mirror.
+
+## Route Planner
+
+A route planner needs graph data, not only system names.
+
+Starting points:
+```text
+/v1/current/systems
+/v1/current/route-edges
+/v1/entities/{system}/relations
+```
+
+Minimum local model:
+
+1. map every system id to display name and coordinates
+2. map every route edge to an adjacency list
+3. preserve the source id or confidence for each edge
+4. run a graph algorithm locally
+5. display route freshness and unresolved edges
+
+Useful graph algorithms:
+
+Need | Algorithm
+--- | ---
+Fewest hops | Breadth-first search.
+Weighted risk route | Dijkstra's algorithm.
+Avoid specific systems | Filter nodes before search.
+Compare alternate routes | Run multiple weighted searches with different costs.
+
+Do not copy another site's private API or scrape a route planner that disallows it. Build from public Registry exports, static-client route data and your own graph logic.
+
+## dApp With EVE Vault And Server Session
+
+Use this when a dApp needs a private server-side session after a player connects.
+```text
+EVE Vault connect
+  -> client gets connected address
+  -> server challenge with nonce
+  -> user signs personal message
+  -> server verifies signature
+  -> server sets HTTPOnly session cookie
+```
+
+Server-side challenge contents should include:
+- origin or audience
+- connected address
+- random nonce
+- issued time
+- expiry time
+- purpose such as `login`
+
+Server checks:
+
+Check | Why
+--- | ---
+Nonce exists and is unused. | Prevent replay.
+Nonce has not expired. | Limit stolen signature lifetime.
+Signed address matches challenge. | Prevent account swapping.
+Message purpose matches route. | Prevent cross-use of signatures.
+Origin/audience matches your app. | Prevent reuse on another site.
+
+The session proves control of a wallet address at login time. It does not prove current assembly ownership, current tribe membership or permission to mutate an object. Check those separately.
+
+## dApp Attached To An Assembly
+
+The in-game dApp flow commonly passes environment and selected assembly context through URL parameters such as:
+```text
+?tenant=stillness
+?itemId=<in-game item id>
+```
+
+`itemId` is an in-game item id, not automatically a Sui object id.
+
+Recommended flow:
+
+1. read `tenant` and `itemId`
+2. resolve display context from Black Relay where useful
+3. resolve exact object state through dApp Kit, Sui GraphQL or the official flow
+4. check owner/capability requirements
+5. build the transaction from live object state
+6. show the user the exact action, target and cost
+7. request wallet signature or sponsored transaction execution
+8. wait for transaction result
+9. refresh local state and show the transaction digest
+
+Never ask for private keys. Never store wallet secrets. Never build a mutation from only cached Registry data.
+
+## Smart Storage Unit Extension
+
+The official storage-unit extension pattern uses a typed witness:
+```move
+public struct MyStorageAuth has drop {}
+```
+
+The owner authorises that witness type on the storage unit. Your extension then calls storage-unit functions with the witness after enforcing your own rules.
+
+Common SSU extension flows:
+
+Flow | Checks Before Mutation
+--- | ---
+Vending | Payment type, payment amount, stock quantity, recipient character.
+Deposit box | Allowed item type, quantity cap, sender identity, destination inventory.
+Reward claim | Claim eligibility, one-time claim state, reward stock, expiry.
+Tribe hand-off | Tribe rule source, recipient character, owner policy, audit event.
+
+Client UI should show:
+- storage-unit id and display name
+- item type ids and names
+- quantity
+- payment or fee
+- source of the label
+- whether the transaction is sponsored
+- final transaction digest
+
+Use Registry item/type labels for display. Use type ids and live chain objects for logic.
+
+## Smart Gate Extension
+
+The official gate extension pattern also uses a typed witness.
+
+Typical permit flow:
+
+1. gate owner authorises your witness type on the source gate
+2. extension checks rules such as payment, tribe, allowlist or service policy
+3. extension calls the gate module to issue a `JumpPermit`
+4. player uses the permit in a jump transaction
+5. the jump emits public event evidence
+
+Design permit rules so they are narrow:
+- bound to the intended route
+- bound to a character where appropriate
+- time-limited
+- easy to explain before signing
+- auditable through events
+
+Do not expose private allowlists or private route policy through public docs or default API surfaces.
+
+## Turret Extension
+
+Turret tooling needs extra caution because target rules can have direct in-game consequences.
+
+Public tools can show:
+- turret identity
+- assembly/system context
+- source-backed owner/operator context where public
+- public target priority metadata where the extension exposes it
+- enemy type labels where static-client evidence supports them
+
+Private target policy, hostile tracking and operational intel do not belong in the public Registry.
+
+## Static-Client Patch Workflow
+
+When the client changes, avoid manual one-off edits.
+
+Better workflow:
+
+1. run the Registry static-client extractor
+2. register the raw artefact and SHA-256 hash
+3. compare byte identity
+4. normalise semantic rows
+5. generate a diff
+6. review new/changed rows
+7. promote only meaningful changes
+8. export a new bundle
+9. refresh D1/R2 public API data
+
+Use the [latest Registry release](https://github.com/blackrelay/registry/releases/latest) when you want the supported command-line tools.
+
+## Production Checklist
+
+Before putting a Frontier tool in front of users:
+
+1. confirm the environment is correct
+2. show the connected address and selected character context
+3. display object ids or provide a copy action on detail views
+4. show item type ids where assets are involved
+5. show source and freshness for public data
+6. re-read live object state before mutation
+7. use server-side nonces for login signatures
+8. store sessions in HTTPOnly cookies
+9. avoid bearer tokens in query strings
+10. treat display names as UI only
+11. log transaction digests, not secrets
+12. document what data is public and what is private
+
+## When To Use Black Relay
+
+Use Black Relay when your tool needs public, source-aware read data.
+
+Use direct Sui, EVE Vault, dApp Kit and official contract scripts when your tool needs to sign, mutate, sponsor, publish or prove final live state.
+
+That split keeps public data cheap without making the public API responsible for user assets.
+
+If you are still choosing the right upstream tool, use [Reference Links](reference-links/) and [Sui CLI And GraphQL](sui-cli-graphql/) before designing around the API.

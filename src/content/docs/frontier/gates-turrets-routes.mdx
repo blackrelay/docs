@@ -1,0 +1,148 @@
+---
+title: Gates, Turrets And Routes
+description: Route data, gate records, turret extension context and graph-based tools.
+---
+
+Gates and turrets are where public data becomes operational.
+
+Domain  | Public Data Use
+------- | ----------------------------------------------------------------------------
+Gates   | Route discovery, link state, access model, route graph.
+Turrets | Defensive state, target logic, enemy classification, ownership context.
+Routes  | Path finding, dead-end detection, neighbourhood pages, Atlas-style overlays.
+
+## Gate Data
+
+Gate tools usually need:
+- gate ID
+- source system
+- linked gate or destination route
+- public coordinates where available
+- owner or operator where public
+- update time
+- source evidence
+
+Start with:
+```sh
+curl "https://api.blackrelay.network/v1/current/gates?limit=20"
+curl "https://api.blackrelay.network/v1/current/route-edges?limit=20"
+```
+
+Windows:
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/gates?limit=20"
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/route-edges?limit=20"
+```
+
+## Route Planning
+
+A route planner needs a graph:
+```text
+system -> connected system -> connected system
+```
+
+Black Relay can expose route edges and system records but a route planner still needs local graph logic:
+
+1. Load systems.
+2. Load route edges.
+3. Build adjacency lists.
+4. Run breadth-first search for shortest hop route.
+5. Add custom weights for risk, distance or service availability.
+6. Display source and freshness for each edge.
+
+Do not copy another site's private API or implementation. Build from public source data and your own graph code.
+
+## Route Data Model
+
+A useful route graph should keep these fields separate:
+
+Field | Use
+--- | ---
+system id | Stable node key.
+system display name | UI label.
+coordinates | Map layout, distance weighting and spatial filters.
+constellation and region ids | Grouping and navigation.
+route edge source | Provenance for the connection.
+update time | Freshness warning.
+gate ids | Infrastructure detail where a route is gate-backed.
+
+Do not collapse display names into node keys. Two labels can change, while ids stay stable.
+
+## Route Planner Checklist
+
+1. Download systems through `/v1/current/systems` or a current export.
+2. Download route edges through `/v1/current/route-edges`.
+3. Keep a local map of `system_id -> display name`.
+4. Keep coordinates as numbers, not formatted strings.
+5. Build adjacency lists by stable ids.
+6. Filter unavailable or unresolved edges if your UI needs them hidden.
+7. Run path finding locally.
+8. Display source and freshness for any route used operationally.
+9. Keep graph code independent from presentation.
+
+If you need the whole route graph, prefer export files over browser pagination.
+
+## Gate Extension Ideas
+
+Good gate extensions are explicit about the access rule:
+
+Extension    | Rule
+------------ | ----------------------------------------------------------------
+Permit gate  | User must hold or receive a jump permit.
+Toll gate    | User pays a defined amount before the permit is issued.
+Tribe gate   | User must match a public tribe rule or owner-managed allowlist.
+Service gate | Route operator issues permits under a contract or field service.
+
+Keep permit data narrow. A permit should prove access to a route for a bounded time, not leak unrelated private membership data.
+
+## Gate Permit Safety
+
+For permit-style gates, show:
+- source gate
+- destination gate
+- route direction or direction-agnostic rule
+- character receiving the permit
+- expiry time
+- cost or condition
+- package/function that will issue the permit
+
+Do not issue long-lived permits by default. Shorter expiry makes mistakes easier to contain.
+
+## Turret Data
+
+Turret extensions can use target metadata such as item ID, type ID, group ID, character ID, tribe ID, hit-point ratios, aggressor state and behaviour-change reason where the contract exposes it.
+
+For public tools, useful fields include:
+- turret type
+- system and assembly context
+- owner or operator where public
+- current state
+- target-priority rules if the extension publishes them
+- source evidence
+
+Enemy names and type classifications should come from static-client evidence or reviewed extraction rules. Do not infer that a raw ID is an NPC name.
+
+## Turret Policy Safety
+
+Public data can help label enemy types or turret context but target rules are sensitive.
+
+For public tools:
+- show only sourced public fields
+- avoid live hostile tracking
+- avoid private allowlists
+- avoid publishing operational firing policy unless the operator intends that
+
+For contract logic:
+- compare stable ids and type ids
+- keep priority rules explicit
+- emit enough event data to audit rule changes
+- test failure paths for missing online receipts, wrong target type and stale configuration
+
+## Atlas And Status Use
+
+Later Black Relay tools can build on this data:
+- Atlas can show systems, route edges, gates and source-backed overlays.
+- Status can show service availability and indexer freshness.
+- Forge can use item, material and route context for production planning.
+
+Those tools should consume Registry/API data instead of duplicating system or route truth.

@@ -1,0 +1,96 @@
+---
+title: World, Chain And Client
+description: How EVE Frontier public data is split across Sui, World API and static-client sources.
+---
+
+EVE Frontier public data is not stored in one place.
+
+Layer                          | What It Gives You                                                | Builder Use
+------------------------------ | ---------------------------------------------------------------- | --------------------------------------------------------------
+Sui chain                      | Public objects, events, transactions and package modules.        | Durable evidence, transaction reads, state changes.
+World API                      | Current public game identity and state where exposed.            | Resolving current names, tribes and operational world context.
+Static client                  | Names, types, recipes, systems, routes and local game constants. | Display labels, type metadata, route graph and item context.
+Documentation and source repos | Contract shape and intended builder patterns.                    | Understanding the correct write path and extension model.
+
+The Registry combines these into source-labelled records. This is why API responses may include a clean display name while still linking to on-chain or static-client evidence.
+
+## Sui And Move
+
+EVE Frontier uses Sui and Move for programmable world state. Sui is object-centric: game resources are represented as objects with identity, ownership and versioned history. Move is resource-oriented: assets and capabilities can be modelled so they cannot be accidentally copied or silently dropped.
+
+For builders, the important consequence is simple:
+```text
+Do not think only in database rows.
+Think in objects, capabilities, shared state and transaction effects.
+```
+
+## The World Contract Shape
+
+The world contracts are structured as layers:
+
+Layer      | Role
+---------- | ---------------------------------------------------------------------------------
+Primitives | Low-level mechanics such as location, inventory, fuel, status and energy.
+Assemblies | Storage units, gates, turrets and other in-game structures built from primitives.
+Extensions | Player-built Move modules that can be authorised by assembly owners.
+
+Primitives are generally called by assembly modules, not directly by arbitrary player code. Extensions interact through authorised entry points and typed witness patterns.
+
+## Objects And Derived IDs
+
+Frontier maps in-game identifiers to on-chain objects. Character, assembly and network-node objects can be derived from in-game IDs through registry-like object derivation patterns.
+
+This matters for tools:
+- a numeric game ID is not always enough for a chain call
+- a Sui object ID is not always human-readable
+- a display name may require a World API or static-client source
+- an entity can have several related identifiers
+
+Black Relay tries to keep those identifiers together without forcing clients to display all internal IDs by default.
+
+## Ownership And Capabilities
+
+Frontier uses capability-style access. A player does not simply mutate every object from their wallet address. Ownership and authority can be represented by `OwnerCap` objects, often associated with a character.
+
+The recurring pattern is:
+
+1. Borrow a capability from the character or owning object.
+2. Use it in the same transaction.
+3. Return or transfer it according to the contract flow.
+
+This is safer than inventing client-side ownership rules. The contract decides whether a call is valid.
+
+## World API And Current Identity
+
+Some identity data is more naturally resolved through current world services than through historical chain events. Tribe names, descriptions and profile URLs are examples where a current public world source may be required.
+
+That creates a cycle boundary:
+- current cycle records can be resolved from current sources
+- old-cycle records may remain public but lose name resolution if there is no archived source
+
+Black Relay defaults to the current cycle to avoid presenting partially resolved historical data as if it were complete.
+
+## Static Client
+
+Static-client data fills gaps that the chain does not try to solve:
+- type names
+- group IDs
+- item categories
+- enemy classifications
+- systems, constellations and regions
+- routes and jump graph data
+- recipes and blueprints where available
+
+The static client is a public evidence source when imported deliberately. It still needs review because client formats and field meanings can change across patches.
+
+## Practical Rule
+
+Use each layer for the thing it is best at:
+
+Need                          | First Source
+----------------------------- | ----------------------------------------
+Durable event evidence        | Sui event
+Current public identity       | World API or current Registry view
+Display labels and type names | Static client or Registry type routes
+Transaction construction      | Direct Sui reads and wallet/sponsor flow
+Public explorer data          | Black Relay API

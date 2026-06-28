@@ -1,56 +1,106 @@
 ---
-title: Black Relay Public API
-description: Source-aware public API documentation for Black Relay Registry data.
+title: Black Relay Docs
+description: EVE Frontier builder guidance, Registry provenance notes and public API reference.
 ---
 
-Black Relay API serves public EVE Frontier Registry data from Cloudflare.
+Black Relay Docs is a practical guide for EVE Frontier builders who need to understand public world data, Sui reads, wallet identity, smart assemblies, static-client evidence and source-aware tooling.
 
-The API is a read-only edge layer over Registry export bundles:
+The Black Relay API is one tool in that stack. It is useful when you need source-aware public read data but it is not a replacement for official contracts, EVE Vault, direct Sui reads, dApp Kit, local tests or pre-transaction validation.
 
-- D1 stores query indexes for low-latency reads.
-- R2 stores public export artefacts and raw distribution snapshots.
-- The Registry VPS remains the canonical source of truth.
+## Start With The Boundary
 
-Base URL:
+Before choosing a tool, decide what kind of problem you are solving:
 
+Problem | Primary Tooling
+--- | ---
+Learn the world and object model. | Official docs, world contracts, Sui docs.
+Build or publish Move logic. | Builder scaffold, Sui CLI, world contracts.
+Connect a player wallet. | EVE Vault, dApp Kit, server-side nonce flow if needed.
+Inspect exact current object state. | Sui CLI, GraphQL, gRPC or SDK reads.
+Ask a player to sign. | Wallet/dApp flow with fresh object state.
+Show public names, systems, events or sources. | Black Relay API or Registry exports.
+Reproduce the canonical import pipeline. | `blackrelay/registry` tooling.
+
+If the next action can move assets, change infrastructure or spend gas, use direct sources and live reads. If the next action is display, exploration, lookup or provenance, a public read layer may be the right shortcut.
+
+## Builder Map
+
+For Frontier development, these docs focus on boundaries that usually cost builders time:
+
+Problem | Where To Start
+--- | ---
+Setting up tools, wallets and dApp sessions | [Environment And Identity](frontier/environment-and-identity/)
+Planning a tool or dApp workflow | [Development Workflows](frontier/development-workflows/)
+Keeping IDs, names and objects straight | [Identifiers And Data Model](frontier/identifiers-data-model/)
+Understanding the world model | [World, Chain And Client](frontier/world-chain-client/)
+Handling world package upgrades | [World Upgrades](frontier/world-upgrades/)
+Inspecting objects and events directly | [Sui CLI And GraphQL](frontier/sui-cli-graphql/)
+Indexing public chain events | [Events And Indexing](frontier/events-and-indexing/)
+Building around smart assemblies | [Smart Assemblies](frontier/smart-assemblies/)
+Designing a programmable storage unit | [Programmable SSUs](frontier/programmable-ssus/)
+Working with routes, gates and systems | [Gates, Turrets And Routes](frontier/gates-turrets-routes/)
+Handling rift and location evidence | [Rifts And Locations](frontier/rifts-and-locations/)
+Understanding static-client data | [Static Client Data](frontier/static-client-data/)
+Finding the right upstream tool or endpoint | [Reference Links](frontier/reference-links/)
+Testing safely before live use | [Testing And Localnet](frontier/testing-localnet/)
+Designing the frontend/server split | [dApp Architecture](frontier/dapp-architecture/)
+Running a tool after launch | [Deployment And Operations](frontier/deployment-operations/)
+Debugging environment or transaction errors | [Debugging And Help](frontier/debugging-and-help/)
+Reviewing extension safety | [Move Security Checklist](frontier/move-security-checklist/)
+Deciding when the public read layer helps | [Why Use Black Relay](why-use-black-relay/)
+
+## Where Black Relay Fits
+
+Black Relay maintains a Registry pipeline that combines public Sui data, World API snapshots, static-client extraction and reviewed source evidence into export bundles. The public API serves those bundles from Cloudflare.
+
+Use it for public read-side work:
+- lookup and search
+- public current-state tables
+- source and confidence display
+- killmail and event browsing
+- static-client labels and type metadata
+- export freshness checks
+- bulk public exports
+
+Do not use it as transaction authority. A dApp that signs, sponsors, deploys, mutates or spends should re-read live state through direct Frontier and Sui tooling.
+
+## API Reference
+
+If the API is the right tool for your use case, start with [API Quickstart](quickstart/).
+
+API base URL:
 ```text
 https://api.blackrelay.network
 ```
 
 Current defaults:
 
-| Setting | Value |
-| --- | --- |
-| Environment | `stillness` |
-| Current cycle | `6` |
-| API version | `v1` |
-| Access model | Public read-only |
-| CORS | `Access-Control-Allow-Origin: *` |
-| Methods | `GET`, `HEAD`, `OPTIONS` |
+Setting | Value
+--- | ---
+Environment | `stillness`
+Current cycle | `6`
+API version | `v1`
+Access model | Public read-only
+CORS | `Access-Control-Allow-Origin: *`
+Methods | `GET`, `HEAD`, `OPTIONS`
 
-## Core Ideas
-
-Every useful response should let a client ask:
-
-| Question | API Surface |
-| --- | --- |
-| What records exist? | `/v1/entities`, typed collections and current collections |
-| What is the current public state? | `/v1/current/{collection}` |
-| Where did this claim come from? | facts, relations, sources and artefacts |
-| What changed on-chain? | `/v1/events` |
-| What combat records exist? | `/v1/killmails` |
-| How fresh is the public export? | `/v1/ops/freshness`, `/v1/ready` |
-| What data is known to be incomplete? | `/v1/ops/source-gaps`, `/v1/ops/sui-coverage` |
-
-## Status
-
-The API is designed for public tools, explorers and static clients. It exposes public Registry data only. It does not create canonical records, index Sui directly, call the World API, or mutate Registry state.
-
-Use the operations routes to check freshness and source gaps before treating data as complete.
+The API does not create canonical records, index Sui directly, call the World API, sign transactions or mutate Registry state. Use the operations routes to check freshness and source gaps before treating data as complete.
 
 ## Main Links
-
-- [Quickstart](quickstart/)
+- [Why Use Black Relay](why-use-black-relay/)
+- [Source Map](source-map/)
+- [Builder Orientation](frontier/builder-orientation/)
+- [Environment And Identity](frontier/environment-and-identity/)
+- [Development Workflows](frontier/development-workflows/)
+- [Identifiers And Data Model](frontier/identifiers-data-model/)
+- [Sui CLI And GraphQL](frontier/sui-cli-graphql/)
+- [Testing And Localnet](frontier/testing-localnet/)
+- [dApp Architecture](frontier/dapp-architecture/)
+- [Deployment And Operations](frontier/deployment-operations/)
+- [Reference Links](frontier/reference-links/)
+- [Debugging And Help](frontier/debugging-and-help/)
+- [Move Security Checklist](frontier/move-security-checklist/)
+- [API Quickstart](quickstart/)
 - [Responses](responses/)
 - [Routes](routes/)
 - [Current Collections](collections/)

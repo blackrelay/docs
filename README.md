@@ -1,8 +1,6 @@
 # Black Relay Docs
 
-Documentation site for the Black Relay public API at `docs.blackrelay.network`.
-
-The site uses Astro Starlight because this repo is documentation-first: API reference, response shapes, provenance rules, export details and operational status routes.
+Documentation site for Black Relay at `docs.blackrelay.network`. The docs first explain EVE Frontier development boundaries across wallets, Sui reads, world contracts, static-client data, Smart Assemblies, programmable SSUs, dApp architecture, testing and operations. Black Relay API guidance is also included where a public source-aware read layer is the right tool.
 
 ## Development
 

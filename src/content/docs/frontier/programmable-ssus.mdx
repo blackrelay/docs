@@ -1,0 +1,191 @@
+---
+title: Programmable SSUs
+description: How to reason about Smart Storage Unit extensions, inventories and public data.
+---
+
+A Smart Storage Unit (SSU) is a programmable storage structure. It can hold items and expose custom rules through Move extensions.
+
+The SSU is one of the most useful Frontier builder targets because storage can become:
+- a vending machine
+- a public deposit box
+- a field reward dispenser
+- a small trade hub
+- a mission terminal
+- a logistics hand-off point
+- a route-service payment receiver
+
+## Inventory Model
+
+SSU interactions usually involve two inventory ideas:
+
+Inventory           | Purpose
+------------------- | -------------------------------------------------------------
+Primary inventory   | Owner-controlled storage for the SSU.
+Ephemeral inventory | Temporary per-character inventory for non-owner interactions.
+
+Ephemeral inventories make it possible for other players to interact with the SSU without giving them direct owner access.
+
+## Extension Authority
+
+Custom SSU contracts usually use the typed-witness pattern. The extension defines a witness type and the owner authorises that exact type on the storage unit.
+```move
+public struct VendingAuth has drop {}
+```
+
+After authorisation, the extension can call the world storage-unit module through the authorised path. That is different from giving every user owner access. Your extension remains responsible for its own payment, eligibility and rate-limit rules before it calls the storage-unit function.
+
+Builder rule:
+```text
+extension checks policy
+  -> extension calls storage unit with witness
+  -> world module enforces authorised path
+```
+
+## Item Bridge
+
+Items may need to move between in-game state and chain state before a contract can handle them.
+```text
+game item -> chain item -> contract interaction -> game item
+```
+
+Do not assume every item visible in the game is already available to your contract. If a workflow requires a deposit, model the bridge step explicitly and display clear state to the user.
+
+## Deposit And Withdraw Design
+
+Design every item movement as an explicit state transition:
+
+Step | User-Facing Question
+--- | ---
+Item visible in game | Is it in the player inventory or already represented on-chain?
+Bridge to chain | What item type id and quantity will be bridged?
+Deposit into SSU or owned inventory | Which storage unit receives it and under what rule?
+Withdraw from SSU | What type id and quantity leave stock?
+Delivery to player | Does it return to game inventory, owned inventory or an intermediate object?
+
+If the UI cannot explain the current state, do not ask for a signature yet.
+
+## Extension Design Pattern
+
+A useful SSU extension usually has these parts:
+
+Part             | Responsibility
+---------------- | ----------------------------------------------------------------------------
+Configuration    | Owner sets price, allowed types, limits or recipient rules.
+Authorisation    | Owner registers the extension with the SSU.
+User entry point | Player calls a clean function such as `buy`, `deposit`, `claim` or `redeem`.
+SSU call         | Extension calls the SSU using its witness or authorised path.
+Event output     | Contract emits enough data for explorers and indexers.
+
+Keep the user entry point small. The more logic you put into one transaction, the harder it is to explain failure and recover user assets safely.
+
+## Vending Unit Design
+
+A vending SSU needs at least:
+
+Field | Reason
+--- | ---
+Output type id | Contract logic must not compare only display names.
+Output quantity | Prevent ambiguous stock movement.
+Payment type id | Avoid accepting the wrong asset.
+Price | Show exact cost before signing.
+Recipient character | Prevent accidental delivery.
+Stock check | Fail before payment where possible.
+Event output | Let explorers and operators audit purchases.
+
+UI should show both the display name and the stable type id for anything being paid, deposited or withdrawn.
+
+## Deposit Box Design
+
+A deposit SSU needs at least:
+
+Field | Reason
+--- | ---
+Allowed type ids | Prevent arbitrary deposits.
+Quantity limits | Prevent accidental over-deposit.
+Recipient or owner policy | Clarify who can later withdraw.
+Refund or failure handling | Avoid trapping user assets on malformed input.
+Event output | Make deposits auditable.
+
+Avoid unbounded public deposit flows unless the owner explicitly wants that behaviour.
+
+## Example Workflows
+
+### Vending Unit
+```text
+player selects item
+player bridges payment/item if required
+extension checks price and stock
+extension withdraws from SSU
+extension sends item to player or player inventory
+event records purchase
+```
+
+### Deposit Box
+```text
+player bridges item to chain
+extension checks allowed type and quantity
+extension deposits into SSU or owner-controlled inventory
+event records deposit
+```
+
+### Field Reward
+```text
+player proves condition
+extension checks claim state
+extension withdraws reward
+extension marks claim consumed
+event records reward
+```
+
+## Public Data A Tool Needs
+
+Use Black Relay for display and discovery:
+
+UI Field                  | API Starting Point
+------------------------- | -----------------------------------------
+SSU list                  | `/v1/current/storage`
+Owner or operator context | `/v1/current/ownership`, entity relations
+Item names                | `/v1/types/{typeID}`, `/v1/current/items`
+Source evidence           | `/v1/entities/{idOrSlug}/sources`
+Related events            | `/v1/events?module=storage_unit`
+
+Use direct Sui reads for final object versions, ownership, inventory state and transaction building.
+
+## Example API Flow
+
+For an SSU dApp UI:
+
+1. read `tenant` and `itemId` from the dApp context
+2. fetch `/v1/current/storage?q=<itemId>&cycles=current`
+3. fetch `/v1/entities/{storageId}/sources` for evidence display
+4. fetch `/v1/types/{typeID}` for item labels
+5. fetch live object state through direct Sui or dApp Kit before building the transaction
+6. submit only after the user sees the exact item movement
+
+Black Relay can make the UI readable. It should not be the final authority for stock, object version or capability ownership.
+
+## SSU Build Checklist
+
+1. Decide whether the extension is owner-only, public, tribe-gated or payment-gated.
+2. Decide which item type IDs are allowed.
+3. Decide whether the SSU should accept deposits, withdrawals or both.
+4. Define the failure states before writing code.
+5. Keep all quantities explicit.
+6. Emit events that can be indexed later.
+7. Never trust only a display name for type checks.
+8. Use type IDs, object IDs and capabilities for contract logic.
+9. Use names only for UI.
+10. Re-read source and package IDs before deploying to a live environment.
+11. Emit events for successful deposits, withdrawals or claims.
+12. Fail safely when stock, payment or bridge state is not what the UI expected.
+13. Document who can recover stuck stock or misconfigured settings.
+
+## Common Mistakes
+
+Mistake                                                      | Safer Approach
+------------------------------------------------------------ | -----------------------------------------------------------------------
+Comparing only item names.                                   | Compare stable type IDs and display names separately.
+Assuming an SSU inventory is public truth.                   | Check the latest chain object before mutation.
+Hiding pending bridge state.                                 | Show whether an item is in-game, on-chain or in an ephemeral inventory.
+Allowing unlimited public calls.                             | Add limits, caps or explicit owner-controlled configuration.
+Treating Registry export freshness as transaction authority. | Use Registry for discovery then direct Sui for signing.

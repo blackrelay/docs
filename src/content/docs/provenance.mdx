@@ -6,42 +6,46 @@ description: Facts, relations, sources and artefacts.
 Registry records are source-aware. The public API exposes that evidence through entity subroutes.
 
 ## Entity Detail
-
 ```text
 GET /v1/entities/{idOrSlug}
 ```
 
 Entity records include the public identity fields exported by Registry, such as id, slug, display name, entity type, environment, cycle and source-backed summary fields where available.
 
-## Facts
+Use entity detail when a user is looking at one record. Use current collection routes when a user is browsing a table.
 
+## Facts
 ```text
 GET /v1/entities/{idOrSlug}/facts
 ```
 
 Facts are atomic claims about an entity. Typical fact fields include:
 
-| Field | Meaning |
-| --- | --- |
-| `entityId` | Entity receiving the claim. |
-| `key` | Fact key. |
-| `value` | Typed value exported by Registry. |
-| `sourceId` | Source that supports the fact. |
-| `sourceKind` | Source category such as on-chain, World API or static client. |
-| `confidence` | Confidence label. |
-| `environment` | Environment scope. |
-| `cycle` | Cycle scope where known. |
+Field | Meaning
+--- | ---
+`entityId` | Entity receiving the claim.
+`key` | Fact key.
+`value` | Typed value exported by Registry.
+`sourceId` | Source that supports the fact.
+`sourceKind` | Source category such as on-chain, World API or static client.
+`confidence` | Confidence label.
+`environment` | Environment scope.
+`cycle` | Cycle scope where known.
+
+Facts are deliberately small. A system can have separate facts for `solar_system_id`, `region_id`, `constellation_id`, `x`, `y`, `z`, `security_status` and `region_name`. That lets a client show which source supports each claim.
+
+Do not assume two facts with the same display value have the same source strength. A name resolved from static-client data and a name resolved from a current World API row are different evidence paths.
 
 ## Relations
-
 ```text
 GET /v1/entities/{idOrSlug}/relations
 ```
 
 Relations connect entities. They are used for ownership, membership, routes, character-to-tribe evidence and other cross-record links.
 
-## Sources
+Common relation predicates include ownership, membership, route edges and object linkage. Relation rows should be treated as evidence-backed edges, not as hidden business logic. For example, a route planner can build a graph from route-edge relations but it should still show export freshness if the route is used operationally.
 
+## Sources
 ```text
 GET /v1/entities/{idOrSlug}/sources
 GET /v1/sources/{id}
@@ -49,24 +53,69 @@ GET /v1/sources/{id}
 
 Sources explain where public evidence came from. Examples include on-chain events, Sui objects, World API snapshots, static-client artefacts and reviewed public import artefacts.
 
-## Artefacts
+Current public source kinds include:
 
+Source Kind | Meaning
+--- | ---
+`sui_event` | Public Sui event evidence.
+`sui_object` | Public Sui object evidence.
+`world_api` | Public World API snapshot evidence.
+`datahub` | Public DataHub-style type metadata where imported.
+`static_client_data` | Static-client extraction artefacts and reviewed static rows.
+`community_report` | Public report or review input.
+`observed_gameplay` | Public gameplay observation.
+`manual_inference` | Reviewed manual interpretation.
+`reverse_engineered` | Client or protocol analysis evidence.
+
+The source kind tells you where evidence came from. The confidence label tells you how strongly the Registry currently trusts the claim.
+
+## Artefacts
 ```text
 GET /v1/artefacts/{id}
 ```
 
 Artefacts are source files, snapshots or extraction outputs. They preserve evidence independently from normalised Registry records.
 
+Artefacts are not overwritten just because a newer import exists. The Registry can supersede a canonical snapshot while retaining old artefacts for audit and rebuild.
+
+Useful artefact metadata includes:
+- SHA-256 hash
+- path or URI
+- source kind
+- artefact kind
+- row count
+- extraction time
+- importer name and version
+- review status
+
 ## Confidence Labels
 
 Registry exports use these confidence labels:
 
-| Label | Meaning |
-| --- | --- |
-| `verified` | Supported by a strong public source or reviewed import. |
-| `probable` | Strongly indicated but not fully confirmed. |
-| `reported` | Public report or observation requiring caution. |
-| `stale` | Previously supported but likely superseded. |
-| `unknown` | Confidence is not yet established. |
+Label | Meaning
+--- | ---
+`verified` | Supported by a strong public source or reviewed import.
+`probable` | Strongly indicated but not fully confirmed.
+`reported` | Public report or observation requiring caution.
+`stale` | Previously supported but likely superseded.
+`unknown` | Confidence is not yet established.
 
 Clients should display confidence, source kind and cycle context near user-facing claims.
+
+## Practical Display Rules
+
+For explorer UIs:
+
+1. Show the clean display value.
+2. Keep the raw id copyable in detail views.
+3. Show confidence near values that affect decisions.
+4. Link to sources for contested or important claims.
+5. Show `unknown`, `reported` and `stale` states plainly.
+
+For dApps:
+
+1. Use provenance for display and user explanation.
+2. Use direct Sui reads for transaction preflight.
+3. Use stable ids and type ids for logic.
+4. Do not build authorisation on display names.
+5. Treat missing provenance as a reason to be cautious, not a reason to invent.

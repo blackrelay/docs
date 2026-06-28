@@ -1,0 +1,105 @@
+---
+title: Builder Orientation
+description: A practical map for EVE Frontier builders using Sui, Move, official tools and public source data.
+---
+
+EVE Frontier development has three different jobs that often get mixed together:
+
+Job                    | Main Question                                       | Typical Tools
+---------------------- | --------------------------------------------------- | ---------------------------------------------------------
+Read public world data | What exists, where is it and what source proves it? | Black Relay API, Sui reads, World API, static-client data
+Build on-chain logic   | What should this assembly extension do?             | Move, Sui CLI, builder scaffold, world contracts
+Submit player actions  | How do I safely mutate world state?                 | Wallets, sponsored transactions, dApp kit, game client
+
+Black Relay mostly helps with the first job. It gives builders an indexed, source-aware read layer so a tool does not need to run its own full backfill before it can show names, systems, gates, characters or killmails.
+
+## Suggested Learning Path
+
+1. Learn the public data shape: [Source Map](../source-map/).
+2. Learn the world architecture: [World, Chain And Client](world-chain-client/).
+3. Pick a practical workflow: [Development Workflows](development-workflows/).
+4. Learn direct inspection: [Sui CLI And GraphQL](sui-cli-graphql/).
+5. Learn the assembly model: [Smart Assemblies](smart-assemblies/).
+6. Build a small read-only public-data tool: [Quickstart](../quickstart/).
+7. Design one programmable assembly workflow: [Programmable SSUs](programmable-ssus/) or [Gates, Turrets And Routes](gates-turrets-routes/).
+8. Use direct Sui reads only for the data that must be live before a transaction.
+
+## Public Read Layer
+
+For display, search and exploration, the public API can save you from building a chain indexer before your first UI exists:
+```sh
+curl "https://api.blackrelay.network/v1/search?q=gate&limit=10"
+curl "https://api.blackrelay.network/v1/current/systems?q=NN0&limit=10"
+curl "https://api.blackrelay.network/v1/current/gates?limit=10"
+```
+
+Windows:
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/search?q=gate&limit=10"
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/systems?q=NN0&limit=10"
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/gates?limit=10"
+```
+
+This is only the read layer. Use the chain directly when you need a final pre-transaction check.
+
+## Choose The Right First Project
+
+Builder Goal | First Project
+--- | ---
+Learn the data model. | A read-only search page using `/v1/search`.
+Learn spatial data. | A system lookup using `/v1/current/systems`.
+Learn events. | A killmail table using `/v1/killmails`.
+Learn dApp identity. | EVE Vault connect plus a nonce-backed server session.
+Learn assembly extension flow. | A minimal storage-unit or gate extension on a safe target.
+Learn indexing. | A local mirror of `manifest.json` and one JSONL export.
+
+Start read-only unless you specifically need mutation. Read-only tools teach ids, source confidence and freshness without risking assets.
+
+## Direct Chain When Needed
+
+Direct chain reads are still important for:
+- object versions before mutation
+- transaction construction
+- wallet-owned objects
+- `OwnerCap` discovery
+- exact latest state for a single assembly
+- sponsored transaction payloads
+
+The useful pattern is:
+```text
+Registry API for discovery and labels
+Sui read for exact latest object state
+wallet or sponsor flow for mutation
+```
+
+Do not use a cached public export as the only authority before spending assets or changing assembly state.
+
+## Public Data Boundaries
+
+Black Relay docs and API should help public development without becoming private intel infrastructure.
+
+Good public uses:
+- show a sourced system name
+- show a gate route from public records
+- show current public assembly state
+- show the source kind and confidence label for a claim
+- build an explorer or field manual
+
+Avoid:
+- publishing private tribe routes
+- turning reports into unverifiable claims
+- exposing credentials, keys or session data
+- presenting stale exports as live transaction authority
+- hiding source uncertainty from users
+
+## Useful Local Source Material
+
+The local source tree under `public/evefrontier` contains official builder material and examples:
+- Sui and Move fundamentals
+- smart infrastructure overview
+- world contract explanation
+- object and ownership models
+- builder scaffold examples
+- smart gate, storage unit and turret notes
+
+The community tree under `public/community` contains useful extraction and static-client references. Treat community tools as references that need review, not as canonical authority by themselves.

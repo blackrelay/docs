@@ -1,0 +1,122 @@
+---
+title: Move Security Checklist
+description: Security and correctness checks for EVE Frontier Move extensions and dApps.
+---
+
+Move makes some asset bugs harder to write but it does not make extension logic automatically safe.
+
+Use this checklist before putting a Frontier contract or dApp flow in front of users.
+
+## Authority
+
+Check | Why
+--- | ---
+Owner-only calls require the correct `OwnerCap`. | Wallet address alone is not enough.
+Extension calls require an authorised witness or capability. | Prevents unregistered modules from calling privileged paths.
+Public entry points check every caller-controlled value. | Anyone can call public functions.
+Admin/config functions are separate from user functions. | Reduces accidental public mutation.
+Package ids are environment-specific. | Prevents authorising a type from the wrong package.
+
+Do not compare only names, tags or UI labels when the contract needs authority.
+
+## Assets And Inventory
+
+For any item movement:
+
+1. identify the input type id
+2. identify the output type id
+3. check quantity
+4. check recipient
+5. check source inventory
+6. check destination inventory
+7. define the refund or failure path
+8. emit an event after success
+
+Avoid ambiguous partial success. If payment succeeds but delivery fails, the recovery path must be explicit.
+
+## Capabilities
+
+Capabilities should be:
+- used narrowly
+- returned or transferred deliberately
+- typed to the object they control
+- kept out of UI-only state
+- never represented as a display-name check
+
+The `OwnerCap` pattern is a contract authority model, not a frontend permission flag.
+
+## Configuration
+
+Validate configuration at the time it is written and again at the time it is used.
+
+Common configuration fields:
+
+Field | Risk
+--- | ---
+price | zero price, overflow, wrong token type
+allowed type id | accepting the wrong item
+quantity cap | unlimited drain or unbounded deposit
+expiry | stale permits or permanent access
+recipient | sending to wrong character or inventory
+route/gate id | issuing permits for the wrong route
+package/function target | wrong environment or upgraded package
+
+If a config value comes from a UI, assume it can be tampered with.
+
+## Events
+
+Emit events that make successful changes auditable:
+- actor or character id where public and appropriate
+- object id
+- type id
+- quantity
+- route or system id where relevant
+- config version or rule id
+- result state
+
+Do not put secrets, private route policy or private allowlists in public events.
+
+## dApp Signing Surface
+
+Before requesting a signature, the UI should show:
+- action name
+- target assembly
+- item type ids and quantities
+- fee or toll
+- route or destination where relevant
+- sponsor/gas owner where relevant
+- environment
+- freshness of public display data
+
+The player should be able to refuse without losing local UI state.
+
+## Server-Side Services
+
+If a server sponsors transactions or verifies login signatures:
+
+1. use nonces
+2. expire challenges quickly
+3. bind challenges to origin/audience and address
+4. store sessions in `HttpOnly` cookies
+5. reject replayed challenges
+6. log transaction digests, not credentials
+7. rate-limit mutation endpoints
+8. keep sponsor keys out of repository and logs
+
+A server session proves a recent wallet-controlled signature. It does not prove permanent asset ownership.
+
+## Review Questions
+
+Before release:
+- What can any caller do?
+- What can only an owner do?
+- What can only an authorised extension do?
+- What happens if the item type is wrong?
+- What happens if stock changes between UI load and signing?
+- What happens if the transaction is replayed?
+- What is emitted for indexers?
+- What private data is deliberately not emitted?
+- How does the owner recover from bad configuration?
+- Which values must be re-read from Sui immediately before signing?
+
+If you cannot answer those questions, the contract or dApp is not ready for valuable assets.

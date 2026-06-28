@@ -1,22 +1,19 @@
 ---
-title: Quickstart
+title: API Quickstart
 description: First calls, query parameters and practical public API examples.
 ---
 
 ## First Request
-
 ```sh
 curl "https://api.blackrelay.network/v1/health"
 ```
 
 Windows:
-
 ```powershell
 Invoke-RestMethod "https://api.blackrelay.network/v1/health"
 ```
 
 Expected shape:
-
 ```json
 {
   "data": {
@@ -33,13 +30,11 @@ Expected shape:
 ## Discover Routes
 
 Request the API root to get the current route list advertised by the Worker:
-
 ```sh
 curl "https://api.blackrelay.network/v1"
 ```
 
 Windows:
-
 ```powershell
 Invoke-RestMethod "https://api.blackrelay.network/v1"
 ```
@@ -47,13 +42,11 @@ Invoke-RestMethod "https://api.blackrelay.network/v1"
 ## Search Entities
 
 Search all indexed entities in the default environment and current cycle scope:
-
 ```sh
 curl "https://api.blackrelay.network/v1/search?q=gate&limit=10"
 ```
 
 Windows:
-
 ```powershell
 Invoke-RestMethod "https://api.blackrelay.network/v1/search?q=gate&limit=10"
 ```
@@ -61,35 +54,60 @@ Invoke-RestMethod "https://api.blackrelay.network/v1/search?q=gate&limit=10"
 ## Query A Typed Collection
 
 Typed collection routes return entity records filtered by entity type:
-
 ```sh
 curl "https://api.blackrelay.network/v1/systems?limit=20"
 ```
 
 Windows:
-
 ```powershell
 Invoke-RestMethod "https://api.blackrelay.network/v1/systems?limit=20"
 ```
 
+## Resolve A Static Type
+
+Use `/v1/types/{typeID}` when a chain event or recipe row gives you a numeric type id:
+```sh
+curl "https://api.blackrelay.network/v1/types/3001"
+```
+
+Windows:
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/types/3001"
+```
+
+If the type is not indexed, keep the numeric id visible in your UI rather than guessing a name.
+
 ## Query Current State
 
 Current collections use derived current-state rows where available, with entity fallback for supported collections.
-
 ```sh
 curl "https://api.blackrelay.network/v1/current/characters?cycles=current&limit=20"
 ```
 
 Windows:
-
 ```powershell
 Invoke-RestMethod "https://api.blackrelay.network/v1/current/characters?cycles=current&limit=20"
+```
+
+Other useful current views:
+```sh
+curl "https://api.blackrelay.network/v1/current/systems?cycles=current&limit=20"
+curl "https://api.blackrelay.network/v1/current/gates?cycles=current&limit=20"
+curl "https://api.blackrelay.network/v1/current/enemies?cycles=current&limit=20"
+curl "https://api.blackrelay.network/v1/current/route-edges?cycles=current&limit=20"
+```
+
+Windows:
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/systems?cycles=current&limit=20"
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/gates?cycles=current&limit=20"
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/enemies?cycles=current&limit=20"
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/route-edges?cycles=current&limit=20"
 ```
 
 ## Fetch Provenance
 
 Given an entity id or slug:
-
 ```sh
 curl "https://api.blackrelay.network/v1/entities/<id-or-slug>/facts"
 curl "https://api.blackrelay.network/v1/entities/<id-or-slug>/sources"
@@ -97,17 +115,31 @@ curl "https://api.blackrelay.network/v1/entities/<id-or-slug>/history"
 ```
 
 Windows:
-
 ```powershell
 Invoke-RestMethod "https://api.blackrelay.network/v1/entities/<id-or-slug>/facts"
 Invoke-RestMethod "https://api.blackrelay.network/v1/entities/<id-or-slug>/sources"
 Invoke-RestMethod "https://api.blackrelay.network/v1/entities/<id-or-slug>/history"
 ```
 
+## Inspect Events And Killmails
+
+Use events for raw public chain context and killmails for semantic combat rows:
+```sh
+curl "https://api.blackrelay.network/v1/events?module=killmail&cycles=current&limit=10"
+curl "https://api.blackrelay.network/v1/killmails?cycles=current&limit=10"
+```
+
+Windows:
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/events?module=killmail&cycles=current&limit=10"
+Invoke-RestMethod "https://api.blackrelay.network/v1/killmails?cycles=current&limit=10"
+```
+
+Killmail ids may be shown compactly in UI but keep the original id available for API lookups.
+
 ## Pagination
 
 List routes return `nextCursor` when more rows are available:
-
 ```json
 {
   "data": [],
@@ -120,16 +152,16 @@ List routes return `nextCursor` when more rows are available:
 ```
 
 Pass the cursor back unchanged:
-
 ```sh
 curl "https://api.blackrelay.network/v1/entities?cursor=<nextCursor>"
 ```
 
 Windows:
-
 ```powershell
 Invoke-RestMethod "https://api.blackrelay.network/v1/entities?cursor=<nextCursor>"
 ```
+
+Do not build a cursor yourself. Treat it as an opaque token from the previous response.
 
 ## Query Defaults
 
@@ -138,3 +170,19 @@ Omitted `environment` defaults to `stillness`.
 Omitted `cycle` or `cycles` defaults to the current cycle.
 
 Use `cycles=current` for the current-cycle shortcut. `cycles=6` is also accepted while Cycle 6 is current.
+
+## Freshness Check
+
+Before using the API for operational UI, check readiness and freshness:
+```sh
+curl "https://api.blackrelay.network/v1/ready"
+curl "https://api.blackrelay.network/v1/ops/freshness"
+```
+
+Windows:
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/ready"
+Invoke-RestMethod "https://api.blackrelay.network/v1/ops/freshness"
+```
+
+If freshness is stale for your use case, show that in the interface or fall back to direct source reads.

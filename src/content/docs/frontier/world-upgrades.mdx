@@ -1,0 +1,95 @@
+---
+title: World Upgrades
+description: Original package ids, latest package ids, MVR names and indexer handling for upgraded world contracts.
+---
+
+EVE Frontier world contracts are Move packages. On Sui, package upgrades create new package objects while older packages remain on-chain.
+
+That creates two related identifiers:
+
+Identifier | Meaning
+--- | ---
+original id | The first package id in the upgrade family.
+published-at or latest id | The current package id for new calls and upgraded bytecode.
+
+Do not collapse these into one mental model. Transaction builders, object readers and indexers use them differently.
+
+## MVR For Call Targets
+
+The local builder documentation recommends Move Registry (MVR) for app call targets where supported.
+
+For EVE Frontier world calls, the stable package name is:
+```text
+@evefrontier/world
+```
+
+An app can use the MVR name in supported TypeScript tooling and let the client resolve the package id for the active network.
+
+Use MVR or a configurable latest package id for:
+- new `moveCall` targets
+- entry points introduced by an upgrade
+- dApps that should not hard-code a package address
+
+## Original Id For Existing Types
+
+Existing objects and type strings may still reference the original package id or an older package id in the lineage. Package upgrades do not rewrite every existing object's type tag.
+
+Use the package id in the object's type string for:
+- object filters
+- owned-object queries
+- type-specific scans
+- historical event interpretation
+- resolving existing `JumpPermit` or assembly-related type strings
+
+Indexer consequence:
+```text
+published-at tells you where new calls go
+object type strings tell you where existing rows came from
+```
+
+## Registry Package Manifests
+
+Black Relay Registry tracks package targets in package manifests rather than assuming there is one world package id forever.
+
+For each environment, the manifest can include:
+- current world package id
+- original package id
+- package label
+- environment
+- module names to scan
+- starting checkpoint where known
+
+This lets the indexer backfill events across package generations and still derive one public current-state view.
+
+## Builder Checklist
+
+When the world package changes:
+
+1. read the release notes or published package metadata
+2. update `Move.toml` dependencies if your extension depends on new bytecode
+3. update dApp configuration or MVR resolution if your app uses direct package ids
+4. update indexer manifests for new package ids and modules
+5. keep older package ids in read filters where old objects or events still use them
+6. rerun derivation after backfill
+7. verify current-state output before publishing public exports
+
+## What Black Relay Does For Consumers
+
+The public API hides most package-id churn from read-only clients. A client asking for current gates, systems, killmails or character records should not need to know which world package emitted the original event.
+
+The API still preserves source evidence. If a record was derived from a specific package event, the source and artefact trail should show that.
+
+## When To Bypass The API
+
+Use direct package and object reads when:
+- you are about to sign a transaction
+- you need a new entry point that may not be reflected in public docs yet
+- you need to debug a failed `moveCall`
+- you need exact type strings for object filtering
+- you are writing an indexer and must handle old and new packages explicitly
+
+Use Black Relay when:
+- you need display labels
+- you need source-aware public current state
+- you need public explorer data
+- you need route, type, system or killmail context without operating a full indexer

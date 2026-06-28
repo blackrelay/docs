@@ -1,0 +1,104 @@
+---
+title: Identifiers And Data Model
+description: How to keep Frontier object IDs, item IDs, type IDs, system IDs and display names separate.
+---
+
+Frontier tools break quickly when they treat every identifier as the same kind of value.
+
+Keep stable IDs, display names and source evidence separate.
+
+## Identifier Types
+
+Identifier | Example Shape | Use
+--- | --- | ---
+Sui address | `0x...` | Wallets, accounts and some object addresses.
+Sui object ID | `0x...` | Chain objects such as characters, assemblies, inventories and capabilities.
+Transaction digest | base58-like digest | Debugging, source evidence and user receipts.
+Package ID | `0x...` | Move module target and event type prefix.
+In-game item ID | numeric or string context value | Game-side object reference, often passed to dApps as `itemId`.
+Type ID | numeric static-client type id | Item, ship, enemy, structure and material labels.
+System ID | numeric universe id | Solar system lookup and route graph node.
+Character ID | numeric or object-derived identity | Player/character current-state records.
+Tribe ID | numeric public organisation identity | Tribe display and membership context where sourced.
+Slug | lower-case URL-safe label | UI routing only.
+
+Do not use a display name as a primary key.
+
+## Display Names
+
+Names are useful for humans and risky for logic.
+
+Rules:
+
+1. compare stable IDs in code
+2. show names in UI
+3. keep raw IDs copyable on detail pages
+4. show unresolved values as unresolved
+5. never silently invent a name
+6. keep source links near important names
+
+Names can come from different layers:
+
+Name Type | Likely Source
+--- | ---
+Character and tribe names | World API or public chain-derived current state where exposed.
+Item/type names | Static client or DataHub-like source where imported.
+System names | Static client universe data.
+Killmail participant names | Derived current-state resolution plus raw killmail evidence.
+Enemy names | Static-client type and group evidence, sometimes reviewed.
+
+## IDs In URLs
+
+Registry/API detail routes accept IDs or slugs where supported. UI routes should prefer readable slugs but JSON responses should keep stable IDs.
+
+Good UI:
+```text
+Rain Nybom
+ID: 2112092729
+Source: 1 source
+```
+
+Bad UI:
+```text
+character:stillness:2112092729
+```
+
+The prefixed Registry ID can remain in JSON for debugging but users should not have to read it in tables.
+
+## Source Evidence
+
+Each important field should be traceable back to a source. A source can prove different things:
+
+Source | Usually Proves
+--- | ---
+Sui event | Something was emitted at a transaction/checkpoint.
+Sui object | A public object existed with fields at fetch time.
+World API snapshot | Current public game identity/state at fetch time.
+Static client artefact | Client-side type, system, route or recipe metadata.
+Manual review | A human reviewed and classified imported evidence.
+
+Source evidence does not always prove current truth. An old event proves that an event happened, not that the state is still current.
+
+## Client Data Model
+
+For explorers and dApps, use a shape like:
+```ts
+type DisplayRecord = {
+  id: string;
+  stableKey: string;
+  kind: string;
+  name: string | null;
+  sourceIds: string[];
+  confidence: "verified" | "probable" | "reported" | "stale" | "unknown";
+  updatedAt: string | null;
+  raw?: unknown;
+};
+```
+
+Keep `stableKey` and `name` separate. That makes unresolved names obvious and prevents accidental logic based on labels.
+
+## When Black Relay Helps
+
+Use Black Relay to join public IDs to labels and sources.
+
+Use direct Sui or official tooling when the next action is a mutation, signature, owner-capability check or final object-version check.

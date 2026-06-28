@@ -1,0 +1,165 @@
+---
+title: Environment And Identity
+description: Local setup, EVE Vault, dApp connection modes and identity boundaries for Frontier builders.
+---
+
+EVE Frontier development usually starts with two separate setup tracks:
+
+1. a Sui/Move development environment for packages, scripts and local testing
+2. an EVE Vault identity path for wallet, dApp and in-game interactions
+
+Keep those tracks separate. A local build key, a test wallet and an in-game identity may all be different pieces of state.
+
+## Local Development Environment
+
+The official builder documentation recommends Docker as the fastest cross-platform way to run the builder scaffold localnet setup. Manual setup is also possible with Git, `suiup`, Sui CLI, Node.js and pnpm.
+
+Useful local tooling:
+
+Tool | Purpose
+--- | ---
+Docker | Local Sui development environment through the builder scaffold Docker setup.
+Git | Clone builder-scaffold, world-contracts and related repos.
+`suiup` | Install and manage the Sui CLI.
+Sui CLI | Configure addresses, inspect objects, publish packages and debug transactions.
+Node.js and pnpm | Run TypeScript scripts and dApp tooling.
+builder-scaffold | Example packages, localnet flow and transaction scripts.
+
+Recommended order:
+
+1. start with the builder scaffold Docker setup when you want the shortest path to a working localnet
+2. install Sui CLI directly when you need manual package publish and object inspection
+3. add Node.js and pnpm when you need TypeScript scripts or dApp code
+4. keep testnet keys and local development keys separate from any live-use wallet
+
+## Sui Client Configuration
+
+Installing Sui does not by itself configure a client profile. A builder still needs a Sui client environment, an address and testnet SUI before most CLI calls are useful.
+
+Use the Sui CLI for:
+- checking active environment
+- switching networks
+- creating or importing local addresses
+- inspecting objects
+- publishing packages
+- dry-running or executing transactions
+
+Do not rely on a public data API to decide whether a transaction is safe to sign. Use direct Sui reads for current object versions and capabilities before mutation.
+
+## EVE Vault Identity
+
+EVE Vault is the official wallet and identity surface for EVE Frontier on Sui. The local builder docs describe it as both wallet and dApp authentication layer, with zkLogin-based onboarding.
+
+For builders, the practical consequences are:
+- wallet connection belongs in the user-facing dApp layer
+- dApps should request user approval rather than handling secrets
+- identity and character context must be resolved from public sources before display
+- private keys, wallet secrets and session material should not be part of Registry data
+
+Black Relay stores public game identity where source evidence supports it. It does not store real-world identity, wallet secrets or private session state.
+
+## External Browser dApps
+
+External browser dApps connect through the Sui Wallet Standard and EVE Vault. The official external-browser flow uses query parameters to identify the environment and selected assembly:
+```text
+?tenant=stillness
+?itemId=<in-game item id>
+```
+
+`itemId` is an in-game item id, not a Sui object id. A dApp that needs to mutate chain state still has to resolve the relevant object, check current object version and construct a valid transaction.
+
+Use Registry/API data for:
+- display labels
+- assembly lookup
+- source-backed owner/operator context where public
+- system and type names
+- related events and provenance
+
+Use direct wallet and Sui reads for:
+- transaction signing
+- sponsored transaction flow
+- latest object version
+- capability ownership
+- mutation preconditions
+
+## Custom Server-Side Sessions
+
+Some Frontier dApps need a server session after the user connects with EVE Vault. Common examples include private user preferences, submitted route reports, saved dashboards or rate-limited write actions.
+
+The usual flow is:
+
+1. user connects with EVE Vault and the client sees the connected player wallet address
+2. client requests a login challenge from the server
+3. server creates a short-lived nonce and message bound to that address, origin and purpose
+4. client asks EVE Vault to sign the message as a personal message
+5. client sends the signed message to a server `/login` route
+6. server verifies the signature and address
+7. server consumes the nonce so it cannot be reused
+8. server creates a short-lived session token
+9. server sets that session token in an `HttpOnly` cookie
+
+A minimal challenge should include enough context that the signature cannot be reused somewhere else:
+```text
+Black Relay dApp login
+origin: https://example.blackrelay.network
+address: 0x...
+nonce: server-generated-random-value
+issued_at: 2026-06-28T00:00:00Z
+expires_at: 2026-06-28T00:05:00Z
+purpose: login
+```
+
+The nonce is important. Without it, an attacker may be able to shop around with an old signed message. Treat nonces as single-use server-side records with a short expiry.
+
+Cookie guidance:
+- set `HttpOnly` so JavaScript cannot read the session token
+- set `Secure` in production
+- set `SameSite=Lax` or stricter unless a cross-site flow requires otherwise
+- keep expiry short and rotate sessions when privilege changes
+- do not store the session token in `localStorage`
+- do not put bearer tokens in query strings
+
+Server-side checks:
+
+Check | Reason
+--- | ---
+message matches the stored challenge | Prevents substituted text.
+nonce exists and is unused | Prevents replay.
+nonce has not expired | Limits stolen-signature lifetime.
+signed address matches the challenged address | Prevents account swapping.
+origin or audience matches your app | Prevents cross-site reuse.
+session cookie attributes are strict enough | Reduces browser-side token exposure.
+
+This session proves control of the connected wallet for your server. It does not prove real-world identity, tribe authority, current ownership of a game object or permission to mutate an assembly. Check those separately against chain state or public source data before using the session for anything sensitive.
+
+## In-Game dApps
+
+The in-game browser opens a base dApp for smart assemblies. The local docs describe view-only assembly information, owner metadata editing and custom external URLs.
+
+Owner-edited assembly metadata can include:
+- unit name
+- unit description
+- dApp URL
+
+Those edits are on-chain actions submitted through sponsored transaction flow in the base dApp. A custom external dApp is independent of the CCP safe zone and user transactions may consume gas.
+
+Builder guidance:
+
+1. make it clear when a user is leaving the base dApp
+2. show the selected tenant and item id
+3. show whether a transaction is sponsored or gas-consuming
+4. avoid hiding object ids needed for verification
+5. do not ask for secrets
+6. do not use Registry freshness as a substitute for wallet preflight
+
+## Public API Role
+
+The Black Relay API is useful after identity and environment are known:
+```text
+tenant + item id + wallet state
+  -> dApp resolves object and transaction needs
+  -> Black Relay supplies public labels, routes and source context
+  -> wallet/Sui client signs only after direct verification
+```
+
+That keeps display data cheap while leaving transaction authority with the chain and wallet.

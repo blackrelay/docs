@@ -1,0 +1,60 @@
+---
+title: Reference Links
+description: Official and community reference links for EVE Frontier builders.
+---
+
+This page is a practical link index. It is not a source of truth by itself.
+
+Prefer official documentation and contract source for transaction behaviour. Treat unofficial pages and tools as working notes that still need verification.
+
+## Official EVE Frontier
+
+Link | Use
+--- | ---
+[Builder Documentation](https://docs.evefrontier.com/) | Official concept, builder and tool documentation.
+[World Resources](https://docs.evefrontier.com/tools/resources) | Current World API and package resource links.
+[World Contracts](https://github.com/evefrontier/world-contracts) | Contract source, module names and event shapes.
+[Builder Scaffold](https://github.com/evefrontier/builder-scaffold/tree/main) | Local examples, scripts and extension starting point.
+[EVE Vault Releases](https://github.com/evefrontier/evevault/releases/) | Wallet extension and app releases.
+[dApp Kit](https://docs.evefrontier.com/tools/dapp-kit) | Wallet-facing dApp hooks and GraphQL helpers.
+
+## World API
+
+Environment | Link
+--- | ---
+Stillness | [World API Stillness](https://world-api-stillness.live.tech.evefrontier.com/docs/index.html)
+Utopia | [World API Utopia](https://world-api-utopia.uat.pub.evefrontier.com/docs/index.html)
+
+Current Black Relay defaults are Stillness and the current cycle. Do not assume older cycle data can be resolved from the current World API.
+
+## Sui
+
+Link | Use
+--- | ---
+[Sui Documentation](https://docs.sui.io/) | Sui object model, Move, CLI, SDKs and network behaviour.
+[Sui GraphQL](https://docs.sui.io/guides/developer/accessing-data/query-with-graphql) | Direct object and event queries.
+[Sui TypeScript SDK](https://sdk.mystenlabs.com/typescript) | Transaction building and client-side reads.
+[Move Book](https://move-book.com/) | Move language fundamentals.
+
+## Sui Public Endpoints
+
+Network | RPC | GraphQL | Explorer
+--- | --- | --- | ---
+Mainnet | `https://fullnode.mainnet.sui.io:443` | `https://graphql.mainnet.sui.io/graphql` | [Suiscan Mainnet](https://suiscan.xyz/mainnet/home)
+Testnet | `https://fullnode.testnet.sui.io:443` | `https://graphql.testnet.sui.io/graphql` | [Suiscan Testnet](https://suiscan.xyz/testnet/home)
+Devnet | `https://fullnode.devnet.sui.io:443` | Check current Sui docs before use. | [Suiscan Devnet](https://suiscan.xyz/devnet/home)
+Localnet | `http://localhost:9000` | `http://localhost:9125` | [Suiscan Custom Localnet](https://custom.suiscan.xyz/custom/home/?network=http%3A%2F%2Flocalhost%3A9000)
+
+Verify endpoints before building automation around them. Public endpoints can change behaviour, retention and rate limits.
+
+## Black Relay
+
+Black Relay belongs after the official and direct sources in the stack:
+
+Link | Use
+--- | ---
+[Public API](https://api.blackrelay.network/v1) | Source-aware public read layer.
+[Registry Releases](https://github.com/blackrelay/registry/releases/latest) | Static-client and Registry import/export tooling.
+[Registry Repository](https://github.com/blackrelay/registry) | Canonical data pipeline source.
+
+Use Black Relay when you need a public read model not when you need to sign, mutate, deploy or prove final live object state.

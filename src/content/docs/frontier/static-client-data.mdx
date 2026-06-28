@@ -1,0 +1,251 @@
+---
+title: Static Client Data
+description: Why the static client matters for types, systems, routes, enemies, recipes and names.
+---
+
+Static-client data is the source for many labels and structures that are not pleasant to derive from chain events alone.
+
+Examples:
+- system, constellation and region names
+- system coordinates
+- route and jump graph data
+- item type names
+- material classification
+- enemy names and groups
+- ship and structure names
+- recipes and blueprints where available
+
+## Why It Matters
+
+On-chain data often contains stable IDs. Human tools need names.
+```text
+type_id 3001 -> display name
+system_id 30001001 -> system name
+group_id 5033 -> enemy group classification
+```
+
+If every tool extracts static-client data independently, every tool has to solve the same problems:
+- locating client files
+- decoding binary/static formats
+- normalising names
+- detecting patch changes
+- comparing semantically unchanged dumps
+- resolving IDs to labels
+- preserving raw artefacts
+- reimporting data safely
+
+Black Relay centralises that work for public read use.
+
+## Registry And Static Extraction
+
+Static-client extraction is owned by [blackrelay/registry](https://github.com/blackrelay/registry), not by the public API Worker and not by the docs site.
+
+The Registry repository contains:
+- native Go decoders for local EVE Frontier static-client resources
+- PostgreSQL migrations for canonical source records
+- source artefact registration and SHA-256 evidence hashing
+- reviewed import commands for promoted static rows
+- JSONL export generation for API distribution
+- release binaries for running the importer/indexer/API commands
+
+Published Registry releases are available at [github.com/blackrelay/registry/releases/latest](https://github.com/blackrelay/registry/releases/latest). Use those releases when you want to run the Registry command-line tools without building them from source.
+
+The public API is downstream from that work:
+```text
+local client files
+  -> Registry static-client decoder
+  -> reviewed source artefacts
+  -> canonical PostgreSQL records
+  -> public export bundle
+  -> Cloudflare D1/R2 API
+```
+
+This matters because local extraction is a source-evidence workflow. It should preserve the raw file hash, decoder output and review state before any row becomes a public current-state record.
+
+## How EVE Frontier Local Files Work
+
+The installed client exposes a resource index and packed resource files. The Registry decoder looks for an index file under the client root:
+```text
+resfileindex.txt
+resfileindex_prefetch.txt
+resfileindex_Windows.txt
+```
+
+Each useful index row maps a logical resource path to a local resource file path:
+```text
+res:/staticdata/types.fsdbinary,3c/types-file,content-hash,index-size,packed-size
+```
+
+The physical file is usually resolved near:
+```text
+<client root>/ResFiles/<hash path>
+<client parent>/ResFiles/<hash path>
+```
+
+Registry does not trust only the index hash. It opens the resolved file, calculates a SHA-256 hash and stores the resolved source-resource evidence in the extraction output.
+
+Important local resource paths currently used by Registry include:
+
+Resource | Use
+--- | ---
+`res:/staticdata/regions.static` | Region ids, names and centre coordinates.
+`res:/staticdata/constellations.static` | Constellation ids, region ids, names and centre coordinates.
+`res:/staticdata/systems.static` | Solar-system ids, names, region/constellation ids and centre coordinates.
+`res:/staticdata/jumps.static` | Static jump graph rows and jump coordinates.
+`res:/staticdata/types.fsdbinary` | Type ids, group ids, name ids and wreck type ids.
+`res:/staticdata/industry_blueprints.fsdbinary` | Blueprint and recipe candidate rows where the decoder validates them.
+`res:/staticdata/typematerials.fsdbinary` | Material requirement candidate rows.
+`res:/localizationfsd/localization_fsd_en-us.pickle` | English localisation names used to resolve ids.
+
+The exact file set can change by patch. Registry treats missing or changed resources as evidence that needs review, not as a reason to invent fallback data.
+
+## Native Artefact Schemas
+
+The Registry decoders write deterministic JSON artefacts with schema markers so later imports can tell which extractor produced the file.
+
+Artefact Schema | Created By | Contains
+--- | --- | ---
+`registry.static-client-universe-decode.v1` | `static-client-decode-universe` | Resource hashes plus counts for decoded regions, constellations, systems and jumps.
+`fsd_binary_schema/regions.json` | universe decoder | Import-compatible region rows.
+`fsd_binary_schema/constellations.json` | universe decoder | Import-compatible constellation rows.
+`fsd_binary_schema/systems.json` | universe decoder | Import-compatible system rows.
+`fsd_binary_schema/jumps.json` | universe decoder | Import-compatible static jump rows.
+`registry.static-client-type-decode.v1` | `static-client-decode-types` | Localisation-backed type rows with offsets and source-resource hashes.
+`registry.static-client-types.v1` | `static-client-extract-types` | Reviewed or native-scan type rows ready for the type importer.
+`registry.static-client-production-resources.v1` | `static-client-extract-production` | Hash manifest for production-related static resources.
+`registry.static-client-production-decode.v1` | `static-client-decode-production` | Blueprint, recipe and material-requirement candidate rows.
+`registry.static-client-recipes.v1` | reviewed recipe artefact | Reviewed recipe rows accepted by the recipe importer.
+
+`fsd_binary_schema` is the import-compatible directory produced by the native universe decoder. It is named that way because earlier static extraction workflows commonly produced JSON files under that structure. Registry now generates those files itself from local client resources and imports the JSON rows directly.
+
+## Current Decoder Notes
+
+These notes describe Black Relay Registry's current reverse-engineered decoder behaviour. They are not an official EVE Frontier static-resource specification.
+
+### Localisation
+
+The localisation decoder scans the English localisation resource for binary integer ids followed by UTF-8 string values. The current implementation recognises:
+- `0x4a` followed by a little-endian integer id
+- short UTF-8 pickle strings after `0x8c`
+- longer UTF-8 pickle strings after `0x58`
+
+Decoded names are repaired before import where the client data contains known mojibake or wrapper punctuation.
+
+### Universe `.static` Dictionaries
+
+The universe decoder treats the region, constellation and system files as static dictionaries:
+- the final four bytes contain a little-endian footer length
+- footer entries contain a key and value offset
+- each value is decoded as the row body for that key
+- region rows expose centre coordinates and region metadata
+- constellation rows expose region id and centre coordinates
+- system rows expose region id, constellation id, centre coordinates and security fields
+
+Names are resolved from native row string fields first then from localisation if required.
+
+The jump file has a stricter fixed-row shape:
+- the first four bytes are a little-endian row count
+- each jump row is 65 bytes
+- rows include jump id, stargate id, from system id, to system id, jump type and from/to coordinates
+
+### `types.fsdbinary`
+
+The type decoder uses little-endian row probes validated against localisation-backed names. The current reviewed row shape is:
+```text
+group_id      at type_id offset - 32
+type_id       at current offset
+type_name_id  at type_id offset + 4
+wreck_type_id at type_id offset + 12
+```
+
+The decoder rejects rows that do not resolve to a non-empty localisation-backed name, rows with implausible sentinel values and rows that look like neighbour-row false positives.
+
+### Production `.fsdbinary`
+
+Production decoding is deliberately conservative.
+
+For material requirements, the decoder reads dictionary entries keyed by type id then validates a quantity list:
+```text
+u64 count
+repeated {
+  u32 material_type_id
+  u32 quantity
+}
+```
+
+For blueprint candidates, the decoder looks for validated header rows:
+```text
+u32 leading_zero
+u32 primary_type_id
+u32 run_time_seconds
+u32 marker_8
+```
+
+It then scans nearby type-id and quantity pairs to build candidate input and output rows. Those candidates are review evidence. Canonical recipe promotion still requires reviewed JSON input.
+
+## Good Static Imports
+
+A good static import:
+
+1. preserves the raw extraction artefact
+2. hashes it with SHA-256
+3. normalises rows by stable keys
+4. compares semantic rows against the previous canonical snapshot
+5. records meaningful diffs
+6. supersedes old snapshots without deleting evidence
+7. updates public current views only when the change is meaningful
+
+Ordering and whitespace changes should not create false data changes. Type ID, group ID, name and source context should drive comparisons.
+
+## Names Versus Stable Keys
+
+Never use display name as the only stable key.
+
+Use:
+- `type_id` for item or ship types
+- `group_id` for classification
+- `system_id` for systems
+- `constellation_id` and `region_id` for hierarchy
+- route endpoints for graph edges
+
+Names are presentation fields. They can change or have punctuation that needs display normalisation.
+
+## Recipes And Blueprints
+
+Recipe and blueprint records are useful for Forge-style tools:
+- output type
+- input materials
+- quantities
+- facility or structure requirements
+- cycle or patch scope
+- source artefact
+
+When recipe data is sparse, the public API should not pretend completeness. Tools should show missing recipe data as "not indexed" rather than "does not exist".
+
+## Enemy Names
+
+Enemy names come from static-client evidence and reviewed extraction rules. The public API can expose enemy records when the source supports them.
+
+Useful enemy fields:
+- type ID
+- group ID
+- display name
+- reviewed enemy classification
+- source artefact
+
+Do not treat an arbitrary killmail ID as an enemy type unless a source explicitly supports that resolution.
+
+## Patch Workflow
+
+When the client updates:
+
+1. extract static rows before or after patch
+2. register the raw artefact
+3. compare hash for byte-identical no-op
+4. normalise rows
+5. compare semantic data
+6. generate diff if meaningful
+7. promote only if changed
+8. update exports and API indexes
+
+This keeps frequent patch handling quiet when bytes change but public meaning does not.

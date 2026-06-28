@@ -1,0 +1,106 @@
+---
+title: Testing And Localnet
+description: How to test Frontier scripts, dApps, extensions and data tools without risking live assets.
+---
+
+Test Frontier code in layers. Do not start with a live asset mutation.
+
+## Test Layers
+
+Layer | What To Test
+--- | ---
+Unit tests | Pure parsing, validation, graph building and UI formatting.
+Fixture tests | Known event payloads, static-client rows and API responses.
+Localnet tests | Move package publish/call flows and object ownership assumptions.
+Testnet/sandbox tests | Wallet, package and transaction behaviour against public infrastructure.
+Production smoke tests | Readiness, freshness, one safe read path and one operator-approved write path.
+
+Move as many failures as possible into unit and fixture tests.
+
+## Localnet Use
+
+Localnet is useful for:
+- learning Sui CLI basics
+- publishing a package repeatedly
+- testing Move aborts
+- checking transaction construction
+- proving a dApp can build the right payload
+- running CI-like package tests
+
+Localnet is not proof that the live world package, World API or current static-client data is correct.
+
+## Fixture Design
+
+Good fixtures include:
+- one valid object/event
+- one missing field case
+- one wrong environment case
+- one stale package id case
+- one unresolved display name case
+- one duplicate display name with different stable IDs
+- one malformed payload
+
+For Registry/API consumers, store only public test data and synthetic data. Do not include private chat, secret routes, tokens or keys.
+
+## Contract Tests
+
+For Move extensions, test:
+
+1. happy path
+2. wrong caller
+3. wrong capability
+4. wrong item type
+5. insufficient quantity
+6. expired permit or claim
+7. duplicate claim
+8. missing stock
+9. config update path
+10. event output
+
+Make aborts specific enough that the UI can tell users what failed.
+
+## dApp Tests
+
+For dApps, test:
+- no wallet connected
+- wrong network
+- locked wallet
+- refused signature
+- stale object version
+- transaction failure after signing
+- sponsor unavailable
+- unresolved Registry label
+- API degraded or not ready
+- missing World API field
+
+Do not make a dApp require the public API for every render if only a small label failed to load.
+
+## Route And Graph Tests
+
+For route planners:
+
+1. test disconnected systems
+2. test self-loops
+3. test duplicate edges
+4. test directed and undirected assumptions
+5. test missing coordinates
+6. test avoided systems
+7. test weighted route changes
+8. test source/freshness display
+
+Route logic should be local and deterministic. Registry/API data should feed the graph, not own the algorithm.
+
+## Release Checklist
+
+Before release:
+- run local tests
+- run contract tests
+- build the frontend
+- verify CSP/security headers if web-hosted
+- verify API default environment and cycle
+- verify no private keys or tokens are in artefacts
+- verify the dApp handles refused signatures
+- verify a user can copy object IDs and transaction digests
+- verify public data freshness is visible
+
+Ship only after the tool fails safely in the cases you expect to happen.

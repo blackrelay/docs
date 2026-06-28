@@ -1,0 +1,113 @@
+---
+title: dApp Architecture
+description: How to split frontend, server, wallet, Registry and direct Sui responsibilities.
+---
+
+A Frontier dApp usually has four boundaries:
+```text
+browser UI
+  -> wallet / EVE Vault
+  -> optional server
+  -> Sui / world contracts
+```
+
+Black Relay can sit beside that flow as a public read layer. It should not become the signing path.
+
+## Responsibility Split
+
+Component | Owns
+--- | ---
+Browser UI | User explanation, wallet prompts, display state and local validation.
+EVE Vault / wallet | Address connection, signing, transaction approval and user consent.
+Server | Nonces, sessions, sponsorship, private config and rate limits where needed.
+Sui / world contracts | Final authority for object state, capabilities and mutation.
+Black Relay API | Public labels, search, provenance, exports and freshness.
+
+Do not put sponsor keys, admin rules or private route data in the browser.
+
+## Read-Only dApp
+
+For a read-only tool:
+
+1. load static UI
+2. call `/v1/ready`
+3. call the specific Registry/API route needed for the page
+4. paginate with cursors
+5. keep IDs copyable
+6. show freshness and source evidence
+
+No wallet connection is required unless the user wants personal state.
+
+## Wallet dApp
+
+For a wallet-aware tool:
+
+1. connect EVE Vault
+2. show the connected address
+3. resolve character context if needed
+4. fetch public labels from Registry/API where helpful
+5. fetch exact object state directly from Sui before mutation
+6. build the transaction
+7. ask for signature
+8. show the digest and result
+
+Never use cached public labels as the only transaction input.
+
+## Server-Backed Session
+
+Use a server session when you need private server state or sponsorship:
+```text
+client asks for challenge
+server returns nonce + message
+client asks wallet to sign personal message
+client sends signature to server
+server verifies and sets HTTPOnly cookie
+```
+
+Server checks:
+- nonce unused
+- nonce not expired
+- address matches challenge
+- audience/origin matches app
+- purpose matches route
+
+The session proves recent wallet control. It does not prove the user owns a specific assembly forever.
+
+## Sponsorship
+
+Sponsored transactions need careful boundaries:
+
+Risk | Control
+--- | ---
+User signs a different action than expected. | Show action, target and package/function before signing.
+Sponsor pays for spam. | Rate-limit and validate server-side.
+Transaction bytes become stale. | Rebuild or re-check immediately before signing.
+Server key leaks. | Store sponsor keys only in a secret manager or trusted runtime.
+
+Do not expose sponsor credentials to the browser.
+
+## Caching
+
+Cache based on data type:
+
+Data | Cache Approach
+--- | ---
+Type names | Long cache, refresh on export version.
+Systems and static route graph | Long cache, refresh on manifest change.
+Current entities | Shorter cache, display freshness.
+Readiness/freshness | Short cache.
+Pre-signing object state | Do not rely on cache.
+
+If an API request fails, show degraded display state rather than blocking the entire dApp unless the missing data is critical.
+
+## Security Headers
+
+Public dApps should usually use:
+- strict Content Security Policy
+- no inline secrets
+- no broad third-party scripts
+- secure cookies for server sessions
+- same-site cookies where possible
+- explicit CORS only where needed
+
+Do not relax security headers to make debugging easier without putting them back before deployment.

@@ -1,0 +1,155 @@
+---
+title: Smart Assemblies
+description: Storage units, gates, turrets and extension patterns for EVE Frontier builders.
+---
+
+Smart Assemblies are programmable player infrastructure. They are in-game structures with on-chain state and public events. The common examples are:
+
+Assembly           | What It Does                       | Common Builder Interest
+------------------ | ---------------------------------- | -----------------------------------------------------
+Smart Storage Unit | Stores and dispenses items.        | Vending, deposits, trade hubs, rewards.
+Smart Gate         | Links routes and controls travel.  | Permits, tolls, access control, route services.
+Smart Turret       | Defends a location.                | Target priority, friendly filtering, defensive rules.
+Network Node       | Supports connected infrastructure. | Fuel, energy, online/offline dependencies.
+
+## Assembly State
+
+Most assembly tools need to know:
+- assembly ID
+- assembly type
+- owner or operator where public
+- system and location context where available
+- current status
+- linked assemblies
+- related sources
+- update time
+
+Start with:
+```sh
+curl "https://api.blackrelay.network/v1/current/assemblies?limit=20"
+curl "https://api.blackrelay.network/v1/current/gates?limit=20"
+curl "https://api.blackrelay.network/v1/current/storage?limit=20"
+curl "https://api.blackrelay.network/v1/current/turrets?limit=20"
+```
+
+Windows:
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/assemblies?limit=20"
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/gates?limit=20"
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/storage?limit=20"
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/turrets?limit=20"
+```
+
+## Extension Model
+
+Assembly owners can authorise custom Move logic. The usual pattern is:
+
+1. Write an extension module.
+2. Publish the package.
+3. Register or authorise the extension type on the assembly.
+4. Have users call the extension entry point.
+5. The extension calls the assembly with an authenticated witness or capability.
+
+This keeps the assembly contract in control. Your extension does not get to bypass the assembly's rules; it gets a sanctioned way to add behaviour.
+
+## Common Build Surfaces
+
+Surface | You Usually Write | You Usually Reuse
+--- | --- | ---
+Move extension | Rule checks and calls into world modules with your witness. | World contracts, assembly modules and primitive modules.
+TypeScript scripts | Publish, configure, authorise and smoke-test flows. | Builder scaffold scripts and Sui client helpers.
+dApp UI | User explanation, wallet connection and transaction request. | EVE Vault, dApp Kit and official assembly base patterns.
+Public explorer | Labels, source context and current-state tables. | Black Relay API and Registry exports.
+
+Keep those surfaces separate. The explorer should not own transaction authority. The dApp should not invent canonical world data. The Move extension should not rely on display names.
+
+## Typed Witness Pattern
+
+A witness type proves that a call came from the module that defines the type. Assemblies can store or check that type identity when deciding whether an extension is authorised.
+
+Builder consequence:
+- define the witness in your extension package
+- do not expose a way for other packages to forge it
+- register the exact type with the assembly
+- update scripts when package IDs change
+- show the authorised package/type in operator documentation
+
+## Capabilities
+
+Owner operations commonly need an `OwnerCap`. The safe mental model:
+```text
+OwnerCap = a keycard for one object, not a global admin role
+```
+
+Borrow-use-return flows should remain in one transaction unless the contract explicitly supports transfer. Do not design a dApp that assumes a cap can be dropped, duplicated or held outside the intended contract flow.
+
+## Package And Environment Checks
+
+Before publishing or authorising an extension, record:
+
+Field | Why It Matters
+--- | ---
+Environment | Package ids and object ids are environment-specific.
+World package id | Move calls must target the deployed package for that environment.
+Extension package id | The authorised witness type includes the package identity.
+Assembly object id or in-game item id | UI and scripts need to resolve the same target.
+OwnerCap path | Owner operations require the correct capability.
+Script command | Future operators need to reproduce configure/authorise steps.
+
+When the world package upgrades, re-check package ids and published-at/original-id handling before running old scripts.
+
+## Data For Explorers
+
+Explorer UIs should show source-backed assembly fields and avoid inventing missing values. For example:
+- if a gate's linked gate is known, display it
+- if coordinates are not public or not imported, show an explicit blank state
+- if an owner relation is sourced, link to the source
+- if an assembly state is stale, display that confidence
+
+Black Relay helps with the display layer. Direct Sui calls remain necessary before mutation.
+
+## User-Facing Transaction Checklist
+
+Before a dApp asks a player to sign:
+
+1. show the selected assembly
+2. show the action in plain language
+3. show item type ids and quantities where items move
+4. show payment, toll or fee if any
+5. show the target package/function where practical
+6. show whether a sponsored transaction is being used
+7. re-read the current object version
+8. handle refusal without losing local state
+9. show the transaction digest after submission
+
+Do not hide important failure states. A transaction that fails because a gate is not linked, an SSU lacks stock or a capability is missing should produce an actionable message.
+
+## Build Checklist
+
+Before you build an assembly extension:
+
+1. Identify the world package and environment.
+2. Identify the assembly type and object IDs.
+3. Confirm ownership or required capabilities.
+4. Read the official assembly module.
+5. Write a minimal extension.
+6. Add TypeScript scripts for configure, authorise and call flows.
+7. Test locally or on a safe target.
+8. Verify every transaction before signing.
+9. Use Registry data for labels and discovery, not as signing authority.
+10. Emit events that give public tools enough context to explain what happened.
+11. Keep private service policy out of public Registry records.
+
+## Where Black Relay Helps
+
+Need | API Route
+--- | ---
+Find assemblies. | `/v1/current/assemblies`
+Find gates. | `/v1/current/gates`
+Find storage units. | `/v1/current/storage`
+Find turrets. | `/v1/current/turrets`
+Resolve item or structure labels. | `/v1/types/{typeID}`
+Inspect source evidence. | `/v1/entities/{idOrSlug}/sources`
+Follow related route edges. | `/v1/current/route-edges`
+
+If a field is missing from Black Relay, use the direct source for that field and consider whether it should become a reviewed public Registry source later.

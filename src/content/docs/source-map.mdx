@@ -1,0 +1,82 @@
+---
+title: Source Map
+description: How Black Relay separates on-chain, World API, static-client and reviewed public sources.
+---
+
+Registry data is useful only when the source boundary is visible. Black Relay treats source evidence and normalised records as separate things.
+```text
+source evidence -> import -> normalised Registry records -> public exports -> API
+```
+
+The API serves the normalised records and keeps links back to sources where the export contains them.
+
+## Source Kinds
+
+Source Kind          | What It Usually Proves                                               | Typical Risk
+-------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------
+`sui_event`          | A public event occurred in a Sui transaction.                        | Event payloads can be hard to interpret without static names and object context.
+`sui_object`         | A public object existed with specific fields.                        | Object scans can be incomplete if the upstream indexer range is blocked.
+`world_api`          | Current public world identity or state exposed by the game service.  | Old-cycle names and descriptions may disappear.
+`datahub`            | Public DataHub-style type metadata where imported.                   | It may not cover every current client or chain field.
+`static_client_data` | Names, types, systems, routes, recipes, groups and client constants. | Client formats can change between patches.
+`community_report`   | A public report that needs review.                                   | It may be incomplete, wrong or stale.
+`observed_gameplay`  | Public gameplay observation that was recorded as evidence.           | Observation can be incomplete and may not be reproducible.
+`manual_inference`   | A reviewed manual interpretation of public evidence.                 | Human interpretation can be superseded by stronger sources.
+`reverse_engineered` | A value recovered from client or protocol analysis.                  | It needs careful review and may change with patches.
+
+The Registry model also reserves `onchain` for older or generic on-chain evidence. Current Sui exports normally use the more specific `sui_event` and `sui_object` values. Clients should treat the value as a label for display and filtering, not as a complete authority model by itself.
+
+Not every response includes every source kind. A character name may come from current public world identity, while a system name may come from static-client extraction and a killmail may come from on-chain event evidence.
+
+## Confidence Labels
+
+Label      | Use
+---------- | --------------------------------------------------------------------
+`verified` | Strong public source or reviewed import evidence supports the claim.
+`probable` | Evidence strongly indicates the claim but does not fully prove it.
+`reported` | Public report or observation requiring caution.
+`stale`    | Previously supported evidence likely superseded by newer data.
+`unknown`  | The importer cannot safely classify confidence.
+
+Clients should show source and confidence near important claims. Do not hide confidence just because the display name looks clean.
+
+## Canonical Records Versus Artefacts
+
+Raw source artefacts are evidence. They are not overwritten when a new extraction arrives. The Registry can supersede a canonical snapshot but the old artefact remains useful for audit, rebuild and diffing.
+
+Normalised records are the query surface. They are allowed to improve as importers learn how to resolve names, relationships, routes or static types. If a normaliser changes, the source evidence should still explain where the record came from.
+
+## Static Client Boundary
+
+Static-client data is important for names and structures that are not always fully visible on-chain:
+- item and material type names
+- system, constellation and region names
+- route and jump graph data
+- type groups and enemy classification
+- recipes and blueprints where available
+
+Black Relay imports this data as public source evidence through reviewed Registry artefacts. It does not claim that every static-client field is safe to expose. The public API should prefer fields that are useful for public tools and do not expose private operational information.
+
+## Source Strength
+
+Source kind is not the same thing as confidence. A `sui_event` can prove that a Move event was emitted but the meaning of a numeric field may still need static-client or World API context. A `world_api` source can resolve a current public tribe name but it may not prove that a historical record had the same name. A `static_client_data` source can resolve item and system labels but client formats can change between patches.
+
+Good clients show both:
+```text
+display value + confidence + source kind + updated/export time
+```
+
+Avoid displaying a clean label as if it were unsourced truth.
+
+## Source Review Checklist
+
+When adding or trusting a source, ask:
+
+1. Is it public?
+2. Is it reproducible?
+3. Does it describe the current cycle, the current environment or a historical scope?
+4. Can a future importer rebuild the same record from the artefact?
+5. Is a lower-confidence label more honest?
+6. Would exposing the field reveal private player, tribe or operational information?
+
+If the answer is unclear, keep the data out of high-confidence current views until it is reviewed.

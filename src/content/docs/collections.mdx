@@ -6,34 +6,59 @@ description: Current-state routes and collection semantics.
 Current collections are derived Registry views designed for explorers and public tools.
 
 They answer: “what is the current public state for this domain?”
-
 ```text
 GET /v1/current/{collection}
 ```
 
+Current collections default to:
+
+Setting | Default
+--- | ---
+Environment | `stillness`
+Cycle scope | current cycle
+Current cycle | `6`
+Page size | route default, with `limit` available
+
+Use `cycles=current` for stable client code. Use `cycles=6` only when you deliberately want to pin the current cycle number in a saved link or reproducible example.
+
 ## Collections
 
-| Collection | Typical Records |
-| --- | --- |
-| `characters` | Character identity, public activity and tribe relation evidence. |
-| `tribes` | Tribe identity and public profile evidence where available. |
-| `assemblies` | Smart Assembly records. |
-| `gates` | Gate infrastructure records. |
-| `storage` | Storage unit records. |
-| `turrets` | Turret infrastructure records. |
-| `regions` | Static-client region records. |
-| `constellations` | Static-client constellation records. |
-| `systems` | Static-client system records and public route context. |
-| `routes` | Route entities. |
-| `route-edges` | Directed or undirected route edge records. |
-| `ownership` | Derived owner relations. |
-| `items` | Static-client item records. |
-| `materials` | Material records. |
-| `enemies` | Enemy records from static-client evidence and reviewed extraction rules. |
-| `recipes` | Recipe records. |
-| `blueprints` | Blueprint records. |
-| `ships` | Ship records. |
-| `structures` | Structure records. |
+Collection | Typical Records | Useful For
+--- | --- | ---
+`characters` | Character identity, public activity and tribe relation evidence. | People search, killmail labels, membership context.
+`tribes` | Tribe identity and public profile evidence where available. | Tribe lookup, public profile links, membership display.
+`assemblies` | Smart Assembly records. | Infrastructure overview.
+`gates` | Gate infrastructure records. | Route tools, gate explorers and access views.
+`storage` | Storage unit records. | SSU browsers, vending or deposit UI discovery.
+`turrets` | Turret infrastructure records. | Defensive infrastructure explorers.
+`regions` | Static-client region records. | Spatial hierarchy and map grouping.
+`constellations` | Static-client constellation records. | Spatial hierarchy and system grouping.
+`systems` | Static-client system records and public route context. | System pages, route planners and map lookups.
+`routes` | Route entities. | Route listings where available.
+`route-edges` | Directed or undirected route edge records. | Graph construction and path finding.
+`ownership` | Derived owner relations. | Owner/operator views where public evidence supports them.
+`items` | Static-client item records. | Item lookup and display labels.
+`materials` | Material records. | Material lookup and production planning.
+`enemies` | Enemy records from static-client evidence and reviewed extraction rules. | NPC/enemy display and killmail resolution.
+`recipes` | Recipe records. | Production tools where reviewed rows exist.
+`blueprints` | Blueprint records. | Blueprint lookup where reviewed rows exist.
+`ships` | Ship records. | Ship type display and classification.
+`structures` | Structure records. | Structure type display and classification.
+
+Some collections are broad static-client imports and can be large. Use pagination for interactive tables. Use export files for offline mirrors and data analysis.
+
+## Response Shape
+
+Current rows are optimised for explorer use. Depending on the collection, a row may include:
+- entity identity fields such as `id`, `slug`, `type`, `displayName`, `environment` and `cycle`
+- a nested `entity` object with canonical entity context
+- source ids or source count
+- confidence and review state
+- collection-specific facts such as `systemId`, `typeId`, `groupId`, coordinates, linked gate, region or constellation
+- `updatedAt`
+- relation summaries where the export contains them
+
+Clients should read the fields they need and ignore unknown fields. New fields may appear as Registry normalisers improve.
 
 ## Current Versus Typed Routes
 
@@ -45,24 +70,54 @@ Use typed routes when you need canonical entity detail.
 
 Use current routes when you need explorer-friendly current state.
 
+## Pagination
+
+Current collections use cursor pagination. If a response includes `nextCursor`, pass it back unchanged:
+```sh
+curl "https://api.blackrelay.network/v1/current/systems?cycles=current&limit=100&cursor=<nextCursor>"
+```
+
+Windows:
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/systems?cycles=current&limit=100&cursor=<nextCursor>"
+```
+
+Do not calculate cursors client-side. The cursor encodes the route's sort order and may change if the API implementation changes.
+
 ## Cycle Scope
 
 Current collection queries accept `cycle` and `cycles`.
 
-| Value | Behaviour |
-| --- | --- |
-| omitted | Current cycle. |
-| `current` | Current cycle shortcut. |
-| `6` | Explicit current Cycle 6 scope. |
+Value | Behaviour
+--- | ---
+omitted | Current cycle.
+`current` | Current cycle shortcut.
+`6` | Explicit current Cycle 6 scope.
+
+The public API currently serves the current cycle as the stable default. Historical or mixed-cycle views should not be assumed unless a route explicitly documents them.
 
 ## Example
-
 ```sh
 curl "https://api.blackrelay.network/v1/current/systems?q=NN0&cycles=current&limit=10"
 ```
 
 Windows:
-
 ```powershell
 Invoke-RestMethod "https://api.blackrelay.network/v1/current/systems?q=NN0&cycles=current&limit=10"
 ```
+
+## Client Display Guidance
+
+For public explorers:
+- show a clean display name first
+- keep raw ids copyable on detail pages
+- show unresolved values explicitly rather than guessing
+- show source and confidence for important claims
+- prefer current collections for tables
+- link to entity detail when a user needs provenance
+
+For transaction-building dApps:
+- use current collections for labels and discovery
+- re-read Sui objects directly before mutation
+- do not use display names for Move logic
+- validate type ids, object ids and capabilities against the chain before signing

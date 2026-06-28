@@ -1,0 +1,79 @@
+---
+title: Builder Safety
+description: Practical safety checks for Frontier tools, dApps, scripts and public data consumers.
+---
+
+Frontier builder work touches chain transactions, public game identity, static-client data and sometimes player assets. Treat the boundary seriously.
+
+## Data Safety
+
+Risk                  | Rule
+--------------------- | ------------------------------------------------------------------------------
+Stale data            | Check `/v1/ready` and `/v1/ops/freshness` before showing strong claims.
+Missing source        | Show confidence and source kind when the claim matters.
+Display-name mistakes | Use stable IDs for logic and names for UI only.
+Historical gaps       | Default to the current cycle unless the API explicitly supports another scope.
+Private information   | Do not import private Discord, private tribe routes or real-world identity.
+
+## Transaction Safety
+
+Before asking a user to sign:
+
+1. show the exact action
+2. show the target object
+3. show item type IDs and quantities
+4. show any fee, toll or payment
+5. show which wallet signs
+6. show whether a sponsor pays gas
+7. show the environment
+8. re-read object state immediately before building the transaction
+
+Do not rely on a cached public export for the final object version.
+
+## Key And Secret Safety
+
+Do not put private keys, session tokens, Discord tokens, admin tokens or sponsor credentials in:
+- source code
+- documentation examples
+- `.env.example`
+- public fixtures
+- screenshots
+- logs
+- issue reports
+
+Use throwaway local keys for local examples. Use secret managers or platform secrets for deployment.
+
+## API Consumer Safety
+
+When consuming Black Relay:
+- set a reasonable `limit`
+- follow `nextCursor` instead of trying to fetch everything at once
+- cache stable static data
+- avoid tight polling loops
+- retry conservatively
+- treat `not_ready` and `degraded` as display states
+- keep a local fallback for critical UI labels where appropriate
+
+## Public Reporting
+
+If you submit public data for Registry review:
+- include the source URL, object ID or artefact hash
+- include environment and cycle
+- state whether the claim is current or historical
+- avoid screenshots that expose private chat or private route planning
+- do not submit alt accusations or real-world identity material
+
+The goal is public evidence, not gossip.
+
+## Release And Patch Safety
+
+Static-client and API consumers should assume patch changes are normal. A patch can change:
+- type names
+- recipe data
+- group classifications
+- system metadata
+- object package IDs
+- event shape
+- World API fields
+
+Build tools that fail visibly and safely when a field is missing. A silent wrong label is worse than an explicit unresolved value.

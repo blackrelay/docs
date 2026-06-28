@@ -4,7 +4,6 @@ description: Freshness, coverage, source gaps and public export files.
 ---
 
 ## Readiness
-
 ```text
 GET /v1/ready
 ```
@@ -15,19 +14,62 @@ It returns `ready` when the Worker can query D1 and the latest manifest exists.
 
 It returns `degraded` when D1 is reachable but the latest R2 manifest pointer is missing.
 
+Readiness is a service check. It does not mean every upstream source is fresh, every Sui object stream is complete or every static-client field has been decoded. Pair it with the operations documents below.
+
 ## Operations Documents
 
-| Route | Description |
-| --- | --- |
-| `/v1/ops/freshness` | Export freshness and build metadata. |
-| `/v1/ops/cursors` | Registry cursor status. |
-| `/v1/ops/sui-coverage` | Sui target coverage, blocked ranges and cursor health. |
-| `/v1/ops/source-gaps` | Known gaps in public data resolution. |
+Route | Description
+--- | ---
+`/v1/ops/freshness` | Export freshness and build metadata.
+`/v1/ops/cursors` | Registry cursor status.
+`/v1/ops/sui-coverage` | Sui target coverage, blocked ranges and cursor health.
+`/v1/ops/source-gaps` | Known gaps in public data resolution.
 
 These documents come from Registry exports. The Worker does not calculate stronger completeness claims.
 
-## Metrics
+## Freshness
+```text
+GET /v1/ops/freshness
+```
 
+Freshness rows describe generated exports, import streams and source scopes. A row can include fields such as:
+
+Field | Meaning
+--- | ---
+`name` | Human-readable stream or export name.
+`status` | Current state such as `fresh` or `stale`.
+`updatedAt` | Last update time in UTC.
+`environment` | Environment scope, usually `stillness`.
+`eventsProcessed` | Processed event count where relevant.
+`errorCount` | Number of recorded errors for the stream.
+`errorSummary` | Short error text where available.
+
+Use freshness to decide how strongly to word a UI claim. For example, an explorer can show a table while also marking the source as stale. A transaction-building dApp should use direct Sui reads for final state regardless of freshness.
+
+## Cursor And Coverage Documents
+```text
+GET /v1/ops/cursors
+GET /v1/ops/sui-coverage
+```
+
+Cursor documents are operational evidence from the Registry indexer. They are useful for status pages and debugging import lag. They are not a replacement for the actual data routes.
+
+Sui coverage documents can report provider-range problems. That means the upstream public GraphQL provider could not answer a broad object query for the requested range. It should be displayed as an indexer/source limitation, not as proof that the object type has no data.
+
+## Source Gaps
+```text
+GET /v1/ops/source-gaps
+```
+
+Source gaps are explicit known limitations. Examples include unresolved actors, source scopes that need a stronger decoder or provider-blocked Sui object streams.
+
+Clients should treat source gaps as warnings attached to the data product:
+- show them in admin/status surfaces
+- do not hide them from operators
+- avoid turning a source gap into a negative claim
+- prefer "not indexed" or "not resolved" over "does not exist"
+
+## Metrics
 ```text
 GET /v1/metrics
 GET /metrics
@@ -35,36 +77,79 @@ GET /metrics
 
 Metrics are Prometheus-style text. They currently expose a build marker and indexed D1 row counts.
 
-## Export Files
+Metrics are intended for service monitoring. They are not a complete data-quality report.
 
+## Export Files
 ```text
 GET /v1/exports/{file}
 ```
 
 Supported files:
 
-| File | Description |
-| --- | --- |
-| `manifest.json` | Latest public export manifest. |
-| `catalog.json` | Compact public catalogue. |
-| `entities.jsonl` | Entity export rows. |
-| `killmails.jsonl` | Killmail export rows. |
-| `sources.jsonl` | Source export rows. |
-| `events.jsonl` | Event export rows. |
-| `sui_objects.jsonl` | Sui object export rows. |
-| `facts.jsonl` | Fact export rows. |
-| `relations.jsonl` | Relation export rows. |
-| `entity_sources.jsonl` | Entity-source link rows. |
-| `source_artefacts.jsonl` | Source artefact rows. |
-| `current_entities.jsonl` | Current-state entity rows. |
-| `current_relations.jsonl` | Current-state relation rows. |
-| `ops_freshness.json` | Freshness document. |
-| `ops_cursors.json` | Cursor document. |
-| `ops_sui_coverage.json` | Sui coverage document. |
-| `ops_source_gaps.json` | Source gap document. |
+File | Description
+--- | ---
+`manifest.json` | Latest public export manifest.
+`catalog.json` | Compact public catalogue.
+`entities.jsonl` | Entity export rows.
+`killmails.jsonl` | Killmail export rows.
+`sources.jsonl` | Source export rows.
+`events.jsonl` | Event export rows.
+`sui_objects.jsonl` | Sui object export rows.
+`facts.jsonl` | Fact export rows.
+`relations.jsonl` | Relation export rows.
+`entity_sources.jsonl` | Entity-source link rows.
+`source_artefacts.jsonl` | Source artefact rows.
+`current_entities.jsonl` | Current-state entity rows.
+`current_relations.jsonl` | Current-state relation rows.
+`ops_freshness.json` | Freshness document.
+`ops_cursors.json` | Cursor document.
+`ops_sui_coverage.json` | Sui coverage document.
+`ops_source_gaps.json` | Source gap document.
 
 Many JSONL files may also exist with `.gz` suffix. When an uncompressed `.jsonl` object is unavailable but the matching `.jsonl.gz` exists, the Worker can serve the compressed artefact from the original route with `Content-Encoding: gzip`.
+
+## Bulk Versus Interactive Use
+
+Use list routes for interactive pages:
+```text
+/v1/current/systems?limit=100
+/v1/killmails?limit=50
+```
+
+Use exports for offline mirrors, analytics and rebuild checks:
+```text
+/v1/exports/entities.jsonl
+/v1/exports/current_entities.jsonl
+/v1/exports/events.jsonl
+```
+
+Do not page through hundreds of thousands of rows in a browser just to build a local mirror. Download the relevant export object instead.
+
+## Manifest
+
+`manifest.json` describes the current export bundle:
+- schema version
+- Registry identifier
+- API version
+- generation time
+- cycle scope
+- database migration versions
+- file paths, hashes, sizes and row counts
+- high-water marks for exported files
+
+Treat the manifest as the distribution snapshot index. If you need reproducibility, store the manifest hash and file hashes alongside your local mirror.
 
 ## Distribution Boundary
 
 R2 exports are distribution snapshots. D1 rows are query indexes generated from those snapshots. The Registry database remains the source of truth.
+
+The public API should be understood as:
+```text
+Registry PostgreSQL source of truth
+  -> export manifest and JSONL artefacts
+  -> R2 public distribution storage
+  -> D1 query indexes
+  -> api.blackrelay.network
+```
+
+If an R2 export and a D1 route disagree, prefer the newer Registry export evidence and check freshness before building a product decision around the mismatch.

@@ -1,0 +1,101 @@
+---
+title: Rifts And Locations
+description: Public rift events, location hashes, revealed coordinates and safe handling of spatial data.
+---
+
+Rift and location data needs careful handling because not every location-like value is public coordinates.
+
+The local world-contract source documents rifts as server-controlled spatial objects. Players do not have an `OwnerCap` for rifts and have no on-chain path to create or modify them.
+
+## Rift Events
+
+The `world::rift` module exposes two public event shapes:
+
+Event | Meaning
+--- | ---
+`RiftSpawnedEvent` | A rift object was spawned with an id, key and location hash.
+`RiftLocationBroadcastEvent` | An authorised sponsor broadcast plaintext location fields on-chain.
+
+`RiftSpawnedEvent` includes:
+- rift id
+- rift key
+- location hash
+
+`RiftLocationBroadcastEvent` includes:
+- rift id
+- rift key
+- location hash
+- solar system
+- `x`
+- `y`
+- `z`
+
+The broadcast event is the important boundary. A hash is evidence that a location exists; a broadcast event is public evidence for plaintext system and coordinate fields.
+
+## Location Hashes
+
+A location hash is not a display coordinate. It can be useful for identity, matching and audit but a public explorer should not pretend it knows the exact location unless a public source reveals it.
+
+Use labels such as:
+```text
+location hash known
+coordinates broadcast
+coordinates not public
+```
+
+Do not convert a hash into a fake system name or coordinate.
+
+## Revealed Coordinates
+
+Some world modules expose `reveal_location` functions or events that record revealed coordinates through a location registry. Treat those as source-backed public coordinates only when the source row includes the system and coordinate fields.
+
+For rifts, the broadcast event records:
+```text
+solarsystem
+x
+y
+z
+```
+
+Those fields may be strings in the event payload, so clients should not assume they are already numeric floats without checking the API schema or parsed payload.
+
+## Registry Handling
+
+Black Relay should store:
+- the raw rift event as source evidence
+- the rift entity where public evidence supports it
+- the location hash as a sourced fact
+- plaintext system/coordinate facts only when a public broadcast or equivalent source exists
+- confidence and source links on every derived field
+
+It should not store:
+- private scout notes
+- hidden tribe routes
+- inferred private locations
+- manually guessed coordinates
+- location data from private Discord or private operations
+
+## Public Tool Guidance
+
+For rift and spatial tools:
+
+1. distinguish hash-only records from coordinate records
+2. show the source of every coordinate
+3. avoid live hostile-tracking behaviour
+4. avoid claiming route safety from stale data
+5. use static-client systems and route edges for map context
+6. use event/source freshness for operational confidence
+
+## API Starting Points
+
+Current public API routes that can help with spatial context:
+```text
+GET /v1/events?module=rift
+GET /v1/current/systems
+GET /v1/current/routes
+GET /v1/current/route-edges
+GET /v1/entities/{idOrSlug}/sources
+GET /v1/ops/freshness
+```
+
+If a route does not return rift records yet, treat that as a source or importer gap. Do not fill it with unsourced field reports.

@@ -1,0 +1,119 @@
+---
+title: Events And Indexing
+description: Public EVE Frontier event surfaces, Registry derivation and why current state is not raw event replay.
+---
+
+On-chain events are durable evidence but they are not automatically clean product data. A public tool has to fetch events, persist cursors, preserve raw payloads, resolve ids, merge static-client labels and derive current state.
+
+Black Relay does that in the Registry pipeline then publishes a read-only edge API.
+
+## Important Event Families
+
+The world-contract source exposes public events across several modules. Current Registry derivation focuses on events that can support public records without private session state.
+
+Module Area | Examples
+--- | ---
+Characters | `CharacterCreatedEvent` and character metadata/state functions.
+Access | `OwnerCapCreatedEvent` and owner-cap transfer events.
+Assemblies | `AssemblyCreatedEvent`, storage, gate and turret creation events.
+Gates | `GateCreatedEvent`, `GateLinkedEvent`, `GateUnlinkedEvent`, `JumpEvent`, `JumpPermitIssuedEvent`.
+Turrets | `TurretCreatedEvent`, `PriorityListUpdatedEvent`, extension authorisation and revocation events.
+Storage Units | `StorageUnitCreatedEvent`, extension authorisation and revocation events.
+Inventory | `ItemMintedEvent`, `ItemBurnedEvent`, `ItemDepositedEventV2`, `ItemWithdrawnEventV2`, `ItemDestroyedEvent`.
+Killmails | `KillmailCreatedEvent`.
+Network Nodes | `NetworkNodeCreatedEvent` plus status, fuel, energy and metadata functions.
+Status | `StatusChangedEvent`.
+Rifts | `RiftSpawnedEvent`, `RiftLocationBroadcastEvent`.
+
+Event names above come from the local `world-contracts` source mirror. They should still be verified against the deployed package version you are indexing.
+
+## Raw Event Rows
+
+Raw event rows usually include:
+- package id
+- module
+- event type
+- transaction digest
+- event sequence
+- checkpoint or timestamp where provided by the indexer
+- parsed JSON payload
+- raw payload evidence
+
+Those fields are useful for audit but they are not enough for user-facing pages. For example, a killmail event may contain numeric ids that need character, system and type resolution before it reads well.
+
+## Derivation
+
+Derivation turns raw evidence into public records.
+```text
+raw chain event
+  -> source row
+  -> entity/fact/relation rows
+  -> current-state rows
+  -> export bundle
+  -> D1 query index
+```
+
+The derived record should preserve:
+- source id
+- confidence label
+- environment
+- current cycle
+- raw event link
+- resolver decisions
+- unresolved ids when no public source resolves them
+
+## Current State Is Not Event Replay In The Browser
+
+Clients should not rebuild current state by replaying every event in the browser. That is slow, fragile and usually incomplete without static-client and World API context.
+
+Use:
+- `/v1/events` for event inspection
+- `/v1/current/{collection}` for current explorer state
+- `/v1/entities/{idOrSlug}/history` for record history where exported
+- `/v1/entities/{idOrSlug}/sources` for evidence
+
+## Cursor Handling
+
+A safe indexer stores cursors per environment, package, module and event stream. It should:
+
+1. resume from saved cursors
+2. avoid reimporting old pages
+3. record empty pages
+4. record range-blocked or provider-limited targets
+5. retry transient network failures
+6. preserve raw event evidence
+7. derive semantic rows after import
+
+Black Relay exposes operational cursor and coverage documents so clients can see whether the public export is fresh enough for their use.
+
+## Resolution Layers
+
+Different event fields need different resolvers.
+
+Raw Field | Possible Resolver
+--- | ---
+character id | World API, character events, current character records.
+tribe id | World API current public tribe data where available.
+system id | static-client universe import.
+type id | static-client type import.
+gate object id | gate event/object derivation.
+owner cap id | access/character/object relation derivation.
+location hash | only public if a source reveals enough context.
+
+If no public source resolves a field, the API should expose the unresolved stable id rather than inventing a name.
+
+## Public Tool Guidance
+
+For public tools:
+- show event source and confidence near important derived labels
+- link to sources where available
+- allow unresolved ids to remain unresolved
+- do not treat every wallet address as a character name
+- do not infer NPC names from killmail actor ids without a type source
+- do not assume a missing record means the thing does not exist
+- check freshness before presenting operational data
+
+For transaction tools:
+- use direct Sui reads before signing
+- use the package id and object version required by the transaction
+- treat Registry/API data as display and discovery data, not a mutation authority

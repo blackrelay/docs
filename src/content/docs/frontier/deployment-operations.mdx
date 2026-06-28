@@ -1,0 +1,108 @@
+---
+title: Deployment And Operations
+description: Operational checks for Frontier dApps, APIs, indexers and public data tools.
+---
+
+Deployment is where a working demo becomes infrastructure.
+
+Write down the operational contract before users depend on the tool.
+
+## Runtime Inventory
+
+Track:
+
+Item | Why
+--- | ---
+public URL | Users and other tools need a stable entry point.
+deployment platform | Helps debug runtime-specific failures.
+environment | Prevents Utopia/Stillness or testnet/mainnet confusion.
+package ids | Needed for transaction targets and event filters.
+API base URL | Needed for public read state.
+World API dependency | Needed for current identity/state resolution.
+Sui endpoint | Needed for direct reads and transaction checks.
+static-client build | Needed when labels, systems or recipes change.
+owner/admin contact | Needed for incident response.
+
+Avoid deployment state that only exists in one person's shell history.
+
+## Health Checks
+
+Expose or monitor:
+- process is running
+- build version
+- API readiness
+- Sui endpoint reachability
+- latest processed cursor or checkpoint
+- latest export timestamp
+- World API fetch status where used
+- storage/database availability
+- last successful static-client import where relevant
+
+Health checks should distinguish unavailable, stale and degraded.
+
+## Indexer Operations
+
+An indexer should:
+
+1. store raw inputs before normalising
+2. persist cursors after successful writes
+3. make writes idempotent
+4. record parser errors separately from provider errors
+5. expose lag and freshness
+6. run backfills separately from incremental sync
+7. avoid unbounded retry loops
+8. keep enough logs to replay a failure
+
+Do not hide skipped ranges. If a provider cannot serve a range, record that as coverage state.
+
+## Export Operations
+
+For public exports:
+- write a manifest
+- include hashes
+- include generated time
+- include cycle/environment scope
+- keep artefact paths stable
+- do not overwrite evidence without preserving provenance
+- make clients able to detect no-op exports
+
+Static exports are distribution snapshots, not live signing state.
+
+## Incident Handling
+
+For a public Frontier tool, useful incident states are:
+
+State | Meaning
+--- | ---
+online | service is healthy enough for normal use
+degraded | service works with stale or partial data
+delayed | indexer or export is behind
+unavailable | service cannot answer useful requests
+maintenance | operator intentionally changed state
+
+Do not call a service healthy only because the web server returns HTML.
+
+## Backups
+
+Back up canonical data, not only generated pages.
+
+Data | Backup Need
+--- | ---
+source artefacts | preserve evidence
+database | recover current state and review decisions
+manifests | reproduce public exports
+configs | redeploy safely
+private keys/secrets | store in a secret manager or offline process, not Git
+
+Generated caches can usually be rebuilt if source artefacts and migrations are intact.
+
+## Public Communication
+
+When data changes:
+- say what changed
+- say what source changed
+- say whether users need to refresh
+- say whether old data was wrong or merely stale
+- link to release notes or source evidence where practical
+
+Avoid vague "fixed data" messages for public infrastructure. Builders need to know whether their own caches and assumptions are affected.

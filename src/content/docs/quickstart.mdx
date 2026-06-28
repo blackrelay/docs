@@ -135,6 +135,6 @@ Invoke-RestMethod "https://api.blackrelay.network/v1/entities?cursor=<nextCursor
 
 Omitted `environment` defaults to `stillness`.
 
-Omitted `cycle` or `cycles` defaults to the current cycle plus uncycled compatibility rows.
+Omitted `cycle` or `cycles` defaults to the current cycle.
 
-Use `cycles=current` for the strict current-cycle shortcut, `cycles=all` for archive rows, or a comma-separated list such as `cycles=5,6`.
+Use `cycles=current` for the current-cycle shortcut. `cycles=6` is also accepted while Cycle 6 is current.

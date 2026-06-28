@@ -11,6 +11,7 @@
     "dev": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
+    "search:preview": "pnpm build && astro preview --host 127.0.0.1 --port 4329",
     "check": "astro check",
     "lint": "astro check",
     "format": "prettier --write .",

@@ -36,6 +36,20 @@ Windows:
 pnpm dev
 ```
 
+Test generated search:
+```sh
+pnpm search:preview
+```
+
+Windows:
+```powershell
+pnpm search:preview
+```
+
+Starlight search uses the generated Pagefind index in `dist/pagefind`, so use
+production preview when checking search behaviour. The `pnpm dev` server shows
+Starlight's development warning instead of live search results.
+
 ## Deployment
 
 Build output is written to `dist` for Cloudflare Pages.

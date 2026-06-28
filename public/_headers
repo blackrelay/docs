@@ -9,10 +9,14 @@
   X-XSS-Protection: 0
 
 /_astro/*.css
-  Use-As-Dictionary: match="/_astro/*.css", type=raw
+  Use-As-Dictionary: match="/_astro/*.css"
 
 /_astro/*.js
-  Use-As-Dictionary: match="/_astro/*.js", type=raw
+  Use-As-Dictionary: match="/_astro/*.js"
+
+/pagefind/*
+  Cache-Control: public, max-age=3600
+  Cross-Origin-Resource-Policy: same-origin
 
 /fonts/*.woff2
   Cache-Control: public, max-age=31536000, immutable

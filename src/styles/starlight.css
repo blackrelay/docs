@@ -16,7 +16,8 @@
     format("woff2-variations");
 }
 
-:root {
+:root,
+::backdrop {
   --sl-font: "Space Grotesk Variable", ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
   --sl-font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo,
@@ -132,6 +133,44 @@ starlight-theme-select {
 
 .search-input::placeholder {
   color: #9b928a;
+}
+
+#starlight__search {
+  --pagefind-ui-primary: #fe4700;
+  --pagefind-ui-text: #f4f1ec;
+  --pagefind-ui-background: #050505;
+  --pagefind-ui-border: rgba(254, 71, 0, 0.28);
+  --pagefind-ui-tag: rgba(254, 71, 0, 0.16);
+}
+
+#starlight__search .pagefind-ui__form::before {
+  background: #fe4700;
+}
+
+#starlight__search .pagefind-ui__search-input {
+  color: #f4f1ec;
+  background: #050505;
+  border-color: rgba(254, 71, 0, 0.32);
+}
+
+#starlight__search .pagefind-ui__search-input::placeholder,
+#starlight__search .pagefind-ui__message,
+#starlight__search .pagefind-ui__result-excerpt {
+  color: #9b928a;
+}
+
+#starlight__search .pagefind-ui__result-title:not(:where(.pagefind-ui__result-nested *)),
+#starlight__search .pagefind-ui__result-nested,
+#starlight__search .pagefind-ui__result-tags {
+  background: #050505;
+}
+
+#starlight__search .pagefind-ui__result-link {
+  color: #f4f1ec;
+}
+
+#starlight__search mark {
+  color: #ff8a63;
 }
 
 code,

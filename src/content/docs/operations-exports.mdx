@@ -1,0 +1,70 @@
+---
+title: Operations And Exports
+description: Freshness, coverage, source gaps and public export files.
+---
+
+## Readiness
+
+```text
+GET /v1/ready
+```
+
+`/v1/ready` checks D1 and the latest R2 manifest pointer.
+
+It returns `ready` when the Worker can query D1 and the latest manifest exists.
+
+It returns `degraded` when D1 is reachable but the latest R2 manifest pointer is missing.
+
+## Operations Documents
+
+| Route | Description |
+| --- | --- |
+| `/v1/ops/freshness` | Export freshness and build metadata. |
+| `/v1/ops/cursors` | Registry cursor status. |
+| `/v1/ops/sui-coverage` | Sui target coverage, blocked ranges and cursor health. |
+| `/v1/ops/source-gaps` | Known gaps in public data resolution. |
+
+These documents come from Registry exports. The Worker does not calculate stronger completeness claims.
+
+## Metrics
+
+```text
+GET /v1/metrics
+GET /metrics
+```
+
+Metrics are Prometheus-style text. They currently expose a build marker and indexed D1 row counts.
+
+## Export Files
+
+```text
+GET /v1/exports/{file}
+```
+
+Supported files:
+
+| File | Description |
+| --- | --- |
+| `manifest.json` | Latest public export manifest. |
+| `catalog.json` | Compact public catalogue. |
+| `entities.jsonl` | Entity export rows. |
+| `killmails.jsonl` | Killmail export rows. |
+| `sources.jsonl` | Source export rows. |
+| `events.jsonl` | Event export rows. |
+| `sui_objects.jsonl` | Sui object export rows. |
+| `facts.jsonl` | Fact export rows. |
+| `relations.jsonl` | Relation export rows. |
+| `entity_sources.jsonl` | Entity-source link rows. |
+| `source_artefacts.jsonl` | Source artefact rows. |
+| `current_entities.jsonl` | Current-state entity rows. |
+| `current_relations.jsonl` | Current-state relation rows. |
+| `ops_freshness.json` | Freshness document. |
+| `ops_cursors.json` | Cursor document. |
+| `ops_sui_coverage.json` | Sui coverage document. |
+| `ops_source_gaps.json` | Source gap document. |
+
+Many JSONL files may also exist with `.gz` suffix. When an uncompressed `.jsonl` object is unavailable but the matching `.jsonl.gz` exists, the Worker can serve the compressed artefact from the original route with `Content-Encoding: gzip`.
+
+## Distribution Boundary
+
+R2 exports are distribution snapshots. D1 rows are query indexes generated from those snapshots. The Registry database remains the source of truth.

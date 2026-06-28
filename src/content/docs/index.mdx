@@ -1,0 +1,59 @@
+---
+title: Black Relay Public API
+description: Source-aware public API documentation for Black Relay Registry data.
+---
+
+Black Relay API serves public EVE Frontier Registry data from Cloudflare.
+
+The API is a read-only edge layer over Registry export bundles:
+
+- D1 stores query indexes for low-latency reads.
+- R2 stores public export artefacts and raw distribution snapshots.
+- The Registry VPS remains the canonical source of truth.
+
+Base URL:
+
+```text
+https://api.blackrelay.network
+```
+
+Current defaults:
+
+| Setting | Value |
+| --- | --- |
+| Environment | `stillness` |
+| Current cycle | `6` |
+| API version | `v1` |
+| Access model | Public read-only |
+| CORS | `Access-Control-Allow-Origin: *` |
+| Methods | `GET`, `HEAD`, `OPTIONS` |
+
+## Core Ideas
+
+Every useful response should let a client ask:
+
+| Question | API Surface |
+| --- | --- |
+| What records exist? | `/v1/entities`, typed collections and current collections |
+| What is the current public state? | `/v1/current/{collection}` |
+| Where did this claim come from? | facts, relations, sources and artefacts |
+| What changed on-chain? | `/v1/events` |
+| What combat records exist? | `/v1/killmails` |
+| How fresh is the public export? | `/v1/ops/freshness`, `/v1/ready` |
+| What data is known to be incomplete? | `/v1/ops/source-gaps`, `/v1/ops/sui-coverage` |
+
+## Status
+
+The API is designed for public tools, explorers and static clients. It exposes public Registry data only. It does not create canonical records, index Sui directly, call the World API, or mutate Registry state.
+
+Use the operations routes to check freshness and source gaps before treating data as complete.
+
+## Main Links
+
+- [Quickstart](quickstart/)
+- [Responses](responses/)
+- [Routes](routes/)
+- [Current Collections](collections/)
+- [Provenance](provenance/)
+- [Events And Killmails](events-killmails/)
+- [Operations And Exports](operations-exports/)

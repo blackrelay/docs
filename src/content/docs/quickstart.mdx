@@ -1,0 +1,140 @@
+---
+title: Quickstart
+description: First calls, query parameters and practical public API examples.
+---
+
+## First Request
+
+```sh
+curl "https://api.blackrelay.network/v1/health"
+```
+
+Windows:
+
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/health"
+```
+
+Expected shape:
+
+```json
+{
+  "data": {
+    "status": "ok",
+    "time": "2026-06-28T00:00:00.000Z"
+  },
+  "meta": {
+    "registry": "blackrelay-api",
+    "apiVersion": "v1"
+  }
+}
+```
+
+## Discover Routes
+
+Request the API root to get the current route list advertised by the Worker:
+
+```sh
+curl "https://api.blackrelay.network/v1"
+```
+
+Windows:
+
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1"
+```
+
+## Search Entities
+
+Search all indexed entities in the default environment and current cycle scope:
+
+```sh
+curl "https://api.blackrelay.network/v1/search?q=gate&limit=10"
+```
+
+Windows:
+
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/search?q=gate&limit=10"
+```
+
+## Query A Typed Collection
+
+Typed collection routes return entity records filtered by entity type:
+
+```sh
+curl "https://api.blackrelay.network/v1/systems?limit=20"
+```
+
+Windows:
+
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/systems?limit=20"
+```
+
+## Query Current State
+
+Current collections use derived current-state rows where available, with entity fallback for supported collections.
+
+```sh
+curl "https://api.blackrelay.network/v1/current/characters?cycles=current&limit=20"
+```
+
+Windows:
+
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/characters?cycles=current&limit=20"
+```
+
+## Fetch Provenance
+
+Given an entity id or slug:
+
+```sh
+curl "https://api.blackrelay.network/v1/entities/<id-or-slug>/facts"
+curl "https://api.blackrelay.network/v1/entities/<id-or-slug>/sources"
+curl "https://api.blackrelay.network/v1/entities/<id-or-slug>/history"
+```
+
+Windows:
+
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/entities/<id-or-slug>/facts"
+Invoke-RestMethod "https://api.blackrelay.network/v1/entities/<id-or-slug>/sources"
+Invoke-RestMethod "https://api.blackrelay.network/v1/entities/<id-or-slug>/history"
+```
+
+## Pagination
+
+List routes return `nextCursor` when more rows are available:
+
+```json
+{
+  "data": [],
+  "meta": {
+    "registry": "blackrelay-api",
+    "apiVersion": "v1"
+  },
+  "nextCursor": "..."
+}
+```
+
+Pass the cursor back unchanged:
+
+```sh
+curl "https://api.blackrelay.network/v1/entities?cursor=<nextCursor>"
+```
+
+Windows:
+
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/entities?cursor=<nextCursor>"
+```
+
+## Query Defaults
+
+Omitted `environment` defaults to `stillness`.
+
+Omitted `cycle` or `cycles` defaults to the current cycle plus uncycled compatibility rows.
+
+Use `cycles=current` for the strict current-cycle shortcut, `cycles=all` for archive rows, or a comma-separated list such as `cycles=5,6`.

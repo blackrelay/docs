@@ -1,0 +1,81 @@
+---
+title: Events And Killmails
+description: On-chain event rows, semantic killmails and combat filters.
+---
+
+## Events
+
+```text
+GET /v1/events
+GET /v1/events/{id}
+```
+
+Events are public on-chain rows exported by Registry and indexed into D1.
+
+Events are ordered newest first.
+
+Useful filters:
+
+| Parameter | Description |
+| --- | --- |
+| `kind` | Normalised event kind. |
+| `module` | Move module name. |
+| `package_id` | Sui package id. |
+| `transaction_digest` | Sui transaction digest. |
+| `source_id` | Registry source id. |
+| `environment` | Defaults to `stillness`. |
+| `cycles` | `current`, `all`, or explicit cycle list. |
+
+Example:
+
+```sh
+curl "https://api.blackrelay.network/v1/events?module=killmail&cycles=current&limit=20"
+```
+
+Windows:
+
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/events?module=killmail&cycles=current&limit=20"
+```
+
+## Killmails
+
+```text
+GET /v1/killmails
+GET /v1/killmails/{id}
+GET /v1/killmails/{id}/raw
+```
+
+Killmail routes expose semantic combat records derived by Registry.
+
+Killmails are ordered newest first.
+
+Filters:
+
+| Parameter | Description |
+| --- | --- |
+| `system` | System entity id. |
+| `victim` | Victim character entity id. |
+| `killer` | Killer character entity id or explicit enemy static type id. |
+| `reporter` | Reporter character entity id. |
+| `npc` | `true` for NPC/enemy killmails, `false` for player-character killmails. |
+| `environment` | Defaults to `stillness`. |
+| `cycles` | `current`, `all`, or explicit cycle list. |
+
+Example:
+
+```sh
+curl "https://api.blackrelay.network/v1/killmails?npc=false&cycles=current&limit=20"
+```
+
+Windows:
+
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/killmails?npc=false&cycles=current&limit=20"
+```
+
+## NPC Resolution
+
+Enemy names come from static-client evidence and reviewed extraction rules. NPC killmail resolution requires an explicit killer type id or a sourced enemy killer relation. Raw killer ids are not treated as static NPC type ids by default.
+
+When an NPC killer is not proven, clients should display the semantic fields returned by the API and avoid inventing a name.

@@ -1,0 +1,96 @@
+---
+title: Responses
+description: Envelope, pagination, errors, caching and method behaviour.
+---
+
+## Envelope
+
+JSON routes return a common envelope:
+
+```ts
+type ApiEnvelope<T> = {
+  data: T;
+  meta: {
+    registry: string;
+    apiVersion: string;
+  };
+  nextCursor?: string;
+};
+```
+
+`nextCursor` only appears on paginated list routes when another page exists.
+
+## Metadata
+
+`meta.registry` identifies the public API deployment, not the canonical Registry database.
+
+`meta.apiVersion` identifies the public route version.
+
+## Error Shape
+
+Errors use the same metadata boundary:
+
+```json
+{
+  "error": {
+    "code": "not_found",
+    "message": "Entity not found."
+  },
+  "meta": {
+    "registry": "blackrelay-api",
+    "apiVersion": "v1"
+  }
+}
+```
+
+Common codes:
+
+| Code | Meaning |
+| --- | --- |
+| `bad_request` | Request parameters were not usable. |
+| `not_found` | The route or record was not found. |
+| `method_not_allowed` | The route only supports `GET` and `HEAD`. |
+| `internal_error` | The Worker failed while handling the request. |
+| `not_ready` | A readiness dependency is unavailable. |
+
+## Methods
+
+The public API supports:
+
+| Method | Behaviour |
+| --- | --- |
+| `GET` | Return the response body. |
+| `HEAD` | Return the same status and headers without a body. |
+| `OPTIONS` | Return CORS preflight headers. |
+
+State-changing methods are rejected.
+
+## Headers
+
+JSON responses use:
+
+```text
+Content-Type: application/json; charset=utf-8
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+Access-Control-Allow-Headers: Content-Type
+X-Content-Type-Options: nosniff
+```
+
+Most read responses use short public cache headers. Health, readiness and errors use `no-store`.
+
+## Limits
+
+`limit` defaults to `50`.
+
+Invalid or missing limits fall back to the default.
+
+The maximum list limit is `200`.
+
+## Cursor Rules
+
+Cursors are opaque. Clients should store and pass them back unchanged. Do not parse or construct cursors in client code.
+
+Entity and current-state lists are ordered by Registry sort key and id.
+
+Events and killmails are ordered newest first by occurrence time and id.

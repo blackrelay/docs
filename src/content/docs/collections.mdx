@@ -1,0 +1,71 @@
+---
+title: Current Collections
+description: Current-state routes and collection semantics.
+---
+
+Current collections are derived Registry views designed for explorers and public tools.
+
+They answer: “what is the current public state for this domain?”
+
+```text
+GET /v1/current/{collection}
+```
+
+## Collections
+
+| Collection | Typical Records |
+| --- | --- |
+| `characters` | Character identity, public activity and tribe relation evidence. |
+| `tribes` | Tribe identity and public profile evidence where available. |
+| `assemblies` | Smart Assembly records. |
+| `gates` | Gate infrastructure records. |
+| `storage` | Storage unit records. |
+| `turrets` | Turret infrastructure records. |
+| `regions` | Static-client region records. |
+| `constellations` | Static-client constellation records. |
+| `systems` | Static-client system records and public route context. |
+| `routes` | Route entities. |
+| `route-edges` | Directed or undirected route edge records. |
+| `ownership` | Derived owner relations. |
+| `items` | Static-client item records. |
+| `materials` | Material records. |
+| `enemies` | Enemy records from static-client evidence and reviewed extraction rules. |
+| `recipes` | Recipe records. |
+| `blueprints` | Blueprint records. |
+| `ships` | Ship records. |
+| `structures` | Structure records. |
+
+## Current Versus Typed Routes
+
+Typed routes such as `/v1/systems` return entity records filtered by entity type.
+
+Current routes such as `/v1/current/systems` return derived current-state rows where the export contains them. For supported collections, the Worker falls back to entity rows if no current rows are available.
+
+Use typed routes when you need canonical entity detail.
+
+Use current routes when you need explorer-friendly current state.
+
+## Cycle Scope
+
+Current collection queries accept `cycle` and `cycles`.
+
+| Value | Behaviour |
+| --- | --- |
+| omitted | Current cycle plus uncycled compatibility rows. |
+| `current` | Current cycle shortcut. |
+| `all` | Include archive rows. |
+| `5,6` | Include explicit cycle list only. |
+
+Cycle 5 archive rows may have unresolved tribe profile names because the current World API does not necessarily retain old profile state.
+
+## Example
+
+```sh
+curl "https://api.blackrelay.network/v1/current/systems?q=NN0&cycles=current&limit=10"
+```
+
+Windows:
+
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/current/systems?q=NN0&cycles=current&limit=10"
+```

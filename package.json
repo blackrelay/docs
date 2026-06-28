@@ -1,0 +1,32 @@
+{
+  "name": "@blackrelay/docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=26.4.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "lint": "astro check",
+    "format": "prettier --write .",
+    "pages:dev": "wrangler pages dev ./dist",
+    "pages:deploy": "wrangler pages deploy ./dist --project-name blackrelay-docs"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@astrojs/starlight": "^0.41.1",
+    "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@fontsource-variable/space-grotesk": "^5.2.10",
+    "astro": "^7.0.3",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "prettier": "3.8.5",
+    "wrangler": "^4.105.0"
+  }
+}

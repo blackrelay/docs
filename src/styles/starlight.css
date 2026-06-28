@@ -1,18 +1,18 @@
 @font-face {
   font-family: "Space Grotesk Variable";
   font-style: normal;
-  font-display: swap;
+  font-display: block;
   font-weight: 300 700;
-  src: url("@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2")
+  src: url("/fonts/space-grotesk-latin-wght-normal.woff2")
     format("woff2-variations");
 }
 
 @font-face {
   font-family: "JetBrains Mono Variable";
   font-style: normal;
-  font-display: swap;
+  font-display: block;
   font-weight: 100 800;
-  src: url("@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2")
+  src: url("/fonts/jetbrains-mono-latin-wght-normal.woff2")
     format("woff2-variations");
 }
 

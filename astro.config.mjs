@@ -12,6 +12,28 @@ export default defineConfig({
       title: "Black Relay API Docs",
       description:
         "Reference documentation for the Black Relay public API and Registry export surface.",
+      head: [
+        {
+          tag: "link",
+          attrs: {
+            rel: "preload",
+            href: "/fonts/space-grotesk-latin-wght-normal.woff2",
+            as: "font",
+            type: "font/woff2",
+            crossorigin: "anonymous",
+          },
+        },
+        {
+          tag: "link",
+          attrs: {
+            rel: "preload",
+            href: "/fonts/jetbrains-mono-latin-wght-normal.woff2",
+            as: "font",
+            type: "font/woff2",
+            crossorigin: "anonymous",
+          },
+        },
+      ],
       customCss: ["./src/styles/starlight.css"],
       favicon: "/logo.png",
       components: {

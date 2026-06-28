@@ -13,3 +13,6 @@
 
 /_astro/*.js
   Use-As-Dictionary: match="/_astro/*.js", type=raw
+
+/fonts/*.woff2
+  Cache-Control: public, max-age=31536000, immutable

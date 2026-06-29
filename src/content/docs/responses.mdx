@@ -50,6 +50,7 @@ Code | Meaning
 `bad_request` | Request parameters were not usable.
 `not_found` | The route or record was not found.
 `method_not_allowed` | The route only supports `GET` and `HEAD`.
+`rate_limited` | The client exceeded a public request limit.
 `internal_error` | The Worker failed while handling the request.
 `not_ready` | A readiness dependency is unavailable.
 
@@ -64,6 +65,7 @@ Status | Typical Meaning
 `400` | Query parameters were invalid or unusable.
 `404` | Route or record was not found.
 `405` | Method is not supported.
+`429` | Public request limit was exceeded.
 `500` | Unexpected Worker or storage failure.
 `503` | Readiness dependency is unavailable.
 
@@ -105,6 +107,16 @@ Invalid or missing limits fall back to the default.
 The maximum list limit is `200`.
 
 Clients should prefer small page sizes for interactive views. Use exports when you need bulk data.
+
+Public request limits are enforced by Cloudflare Worker Rate Limit bindings after the Worker checks its cache. Cache hits do not spend the route budget. Uncached `GET` and `HEAD` requests are grouped by route class and client IP:
+
+Route class | Paths | Limit
+--- | --- | ---
+General API | `/v1/*` except the routes below | 300 requests per minute
+Operations | `/metrics`, `/v1/metrics`, `/v1/ops/*` | 60 requests per minute
+Exports | `/v1/exports/*` | 30 requests per minute
+
+When a request is limited, the API returns HTTP `429`, `Retry-After: 60` and `error.code` set to `rate_limited`. Clients should honour `Retry-After`, keep interactive page sizes small and use cached export files for bulk reads.
 
 ## Cursor Rules
 

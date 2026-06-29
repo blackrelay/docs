@@ -9,11 +9,12 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build && node scripts/disable-rocket-loader.mjs",
+    "build": "astro check && pnpm links:check && astro build && node scripts/disable-rocket-loader.mjs",
     "preview": "astro preview",
     "search:preview": "pnpm build && astro preview --host 127.0.0.1 --port 4329",
-    "check": "astro check",
-    "lint": "astro check",
+    "check": "astro check && pnpm links:check",
+    "links:check": "node scripts/check-internal-links.mjs",
+    "lint": "pnpm check",
     "format": "prettier --write .",
     "pages:dev": "wrangler pages dev ./dist",
     "pages:deploy": "wrangler pages deploy ./dist --project-name blackrelay-docs"

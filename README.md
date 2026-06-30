@@ -1,6 +1,6 @@
 # Black Relay Docs
 
-Documentation site for Black Relay at `docs.blackrelay.network`. The docs first explain EVE Frontier development boundaries across wallets, Sui reads, world contracts, static-client data, Smart Assemblies, programmable SSUs, dApp architecture, testing and operations. Black Relay API guidance is also included where a public source-aware read layer is the right tool.
+Documentation site for Black Relay at `docs.blackrelay.network`. The docs first explain EVE Frontier development boundaries across wallets, Sui reads, world contracts, static-client data, Smart Assemblies, programmable SSUs, dApp architecture, testing and operations. Black Relay API guidance is also included where a public source-labelled read layer is the right tool.
 
 ## Development
 

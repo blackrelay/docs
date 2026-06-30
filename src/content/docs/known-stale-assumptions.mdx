@@ -1,0 +1,70 @@
+---
+title: Known stale assumptions
+description: Old examples, patch-sensitive assumptions and common Frontier data mistakes to check before relying on a record.
+---
+
+Frontier data changes across patches, package upgrades and cycle resets. This page lists assumptions that are easy to carry forward after they stop being true.
+
+Use it as a review checklist before shipping a tool, writing a guide or treating a Registry record as current.
+
+## Current boundaries
+
+Assumption | Safer rule
+--- | ---
+Old cycle records are usable as current identity. | Current views should default to the current cycle. Historical rows need a clear cycle label.
+Static client names never change. | Static client names and type metadata can change after patches. Keep source and extraction time visible.
+World API identity is historical. | World API metadata usually describes current public identity. It may not preserve old-cycle names or descriptions.
+On-chain numeric IDs are enough for users. | Resolve labels where possible and keep the stable ID available for copy and debugging.
+Clean display names are proof. | Display names are presentation. Check source kind, confidence and timestamp.
+API freshness equals transaction safety. | The API is a read layer. Re-read live Frontier and Sui state before signing or mutating anything.
+Missing fields mean the value does not exist. | Missing fields usually mean not indexed, not resolved or not exported by the current pipeline.
+
+## Things people get wrong
+
+### Character and tribe identity
+
+Public character and tribe rows can be derived from several sources. Treat names, tribe membership and address-like values as public game identity hints, not real-world identity proof.
+
+Black Relay indexes public or source-labelled data only. It does not publish private Discord intel, real-world identity claims, wallet secrets or unverifiable alt accusations.
+
+### Static client data
+
+Static client extraction can resolve names, systems, items, groups and route structures that are not convenient to read from events alone. It remains patch-sensitive. A patch can change a type label, add a field, move a schema or invalidate an old extractor assumption.
+
+When a static field matters, show:
+- source kind
+- extraction or export time
+- confidence label
+- stable ID
+
+### Event-derived state
+
+Events are evidence that a public event happened. They do not always prove the current state by themselves. A current-state normaliser may need object reads, package context, static labels and World API metadata.
+
+### Freshness
+
+Freshness is per source class. One part of the Registry can be current while another source window is stale. Check `/v1/ready`, `/v1/ops/freshness` and the record source timestamp before making operational claims.
+
+## Patch checklist
+
+Before trusting a record after a patch:
+
+1. Check the cycle and environment.
+2. Check the source kind.
+3. Check the source timestamp.
+4. Check whether the source is live-indexed or a cached snapshot.
+5. Check whether a static client importer was refreshed after the patch.
+6. Keep unresolved IDs visible instead of inventing names.
+7. Re-read direct Frontier and Sui state before any write path.
+
+## When to report data
+
+Report a bad record when:
+- the label is wrong for a stable ID
+- the cycle is wrong
+- a current view includes historical-only data
+- source confidence is too strong
+- a route, system, item or type relationship is stale after a patch
+- a public record exposes something that should stay out of the public Registry
+
+Use the Registry issue tracker or Discord and include the API URL, record ID, visible source fields and the reason you believe the record is wrong.

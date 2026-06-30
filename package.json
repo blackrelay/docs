@@ -9,10 +9,10 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && pnpm links:check && astro build && node scripts/disable-rocket-loader.mjs",
+    "build": "astro check && node scripts/check-internal-links.mjs && astro build && node scripts/disable-rocket-loader.mjs",
     "preview": "astro preview",
     "search:preview": "pnpm build && astro preview --host 127.0.0.1 --port 4329",
-    "check": "astro check && pnpm links:check",
+    "check": "astro check && node scripts/check-internal-links.mjs",
     "links:check": "node scripts/check-internal-links.mjs",
     "lint": "pnpm check",
     "format": "prettier --write .",

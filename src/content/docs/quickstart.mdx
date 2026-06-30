@@ -4,6 +4,10 @@ description: First calls, query parameters and practical public API examples.
 ---
 
 ## First Request
+
+Black Relay is a public read layer. It is useful for display, lookup, exploration and provenance; it is not transaction authority.
+
+Before signing, sponsoring, deploying or mutating anything, re-read live state through direct Frontier and Sui tooling. Frontier data can change after patches or cycle resets, so check source, cycle and timestamp before relying on a record.
 ```sh
 curl "https://api.blackrelay.network/v1/health"
 ```

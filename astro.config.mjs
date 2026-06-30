@@ -11,7 +11,7 @@ export default defineConfig({
     starlight({
       title: "Black Relay Docs",
       description:
-        "EVE Frontier builder workflows, Registry provenance model and Black Relay public API reference.",
+        "Practical notes for building around EVE Frontier public data, Sui reads, wallet identity, static client data and the Black Relay API.",
       head: [
         {
           tag: "link",
@@ -58,60 +58,61 @@ export default defineConfig({
           label: "Start",
           items: [
             { label: "Overview", slug: "index" },
-            { label: "Why Use Black Relay", slug: "why-use-black-relay" },
-            { label: "Source Map", slug: "source-map" },
+            { label: "Why use Black Relay", slug: "why-use-black-relay" },
+            { label: "Source map", slug: "source-map" },
+            { label: "Known stale assumptions", slug: "known-stale-assumptions" },
           ],
         },
         {
-          label: "Frontier Builder Guide",
+          label: "Frontier builder guide",
           items: [
             {
-              label: "Builder Orientation",
+              label: "Builder orientation",
               slug: "frontier/builder-orientation",
             },
             {
-              label: "Environment And Identity",
+              label: "Environment and identity",
               slug: "frontier/environment-and-identity",
             },
             {
-              label: "Development Workflows",
+              label: "Development workflows",
               slug: "frontier/development-workflows",
             },
             {
-              label: "Identifiers And Data Model",
+              label: "Identifiers and data model",
               slug: "frontier/identifiers-data-model",
             },
             {
-              label: "World, Chain And Client",
+              label: "World, chain and client",
               slug: "frontier/world-chain-client",
             },
-            { label: "World Upgrades", slug: "frontier/world-upgrades" },
+            { label: "World upgrades", slug: "frontier/world-upgrades" },
             {
-              label: "Sui CLI And GraphQL",
+              label: "Sui CLI and GraphQL",
               slug: "frontier/sui-cli-graphql",
             },
             {
-              label: "Events And Indexing",
+              label: "Events and indexing",
               slug: "frontier/events-and-indexing",
             },
             { label: "Smart Assemblies", slug: "frontier/smart-assemblies" },
             { label: "Programmable SSUs", slug: "frontier/programmable-ssus" },
             {
-              label: "Gates, Turrets And Routes",
+              label: "Gates, turrets and routes",
               slug: "frontier/gates-turrets-routes",
             },
-            { label: "Rifts And Locations", slug: "frontier/rifts-and-locations" },
+            { label: "Rifts and locations", slug: "frontier/rifts-and-locations" },
             {
-              label: "Static Client Data",
+              label: "Static client data",
               slug: "frontier/static-client-data",
             },
             {
-              label: "Tooling And References",
+              label: "Tooling and references",
               slug: "frontier/tooling-references",
             },
-            { label: "Reference Links", slug: "frontier/reference-links" },
+            { label: "Reference links", slug: "frontier/reference-links" },
             {
-              label: "Testing And Localnet",
+              label: "Testing and localnet",
               slug: "frontier/testing-localnet",
             },
             {
@@ -119,30 +120,31 @@ export default defineConfig({
               slug: "frontier/dapp-architecture",
             },
             {
-              label: "Deployment And Operations",
+              label: "Deployment and operations",
               slug: "frontier/deployment-operations",
             },
             {
-              label: "Debugging And Help",
+              label: "Debugging and help",
               slug: "frontier/debugging-and-help",
             },
             {
-              label: "Move Security Checklist",
+              label: "Move security checklist",
               slug: "frontier/move-security-checklist",
             },
-            { label: "Builder Safety", slug: "frontier/builder-safety" },
+            { label: "Builder safety", slug: "frontier/builder-safety" },
           ],
         },
         {
-          label: "API Reference",
+          label: "API reference",
           items: [
-            { label: "API Quickstart", slug: "quickstart" },
+            { label: "API quickstart", slug: "quickstart" },
+            { label: "Runnable examples", slug: "examples" },
             { label: "Responses", slug: "responses" },
             { label: "Routes", slug: "routes" },
-            { label: "Current Collections", slug: "collections" },
+            { label: "Current collections", slug: "collections" },
             { label: "Provenance", slug: "provenance" },
-            { label: "Events And Killmails", slug: "events-killmails" },
-            { label: "Operations And Exports", slug: "operations-exports" },
+            { label: "Events and killmails", slug: "events-killmails" },
+            { label: "Operations and exports", slug: "operations-exports" },
           ],
         },
       ],

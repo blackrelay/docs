@@ -31,7 +31,7 @@ Black Relay is the shared public read layer built from those sources:
 public sources -> Registry pipeline -> R2 exports + D1 query index -> api.blackrelay.network
 ```
 
-That means a public tool can start with indexed source-aware records instead of immediately operating:
+That means a public tool can start with indexed source-labelled records instead of immediately operating:
 - a Sui event backfiller
 - a Sui object scanner
 - a PostgreSQL Registry database
@@ -101,6 +101,6 @@ Black Relay is a public data spine, not a signer, wallet, transaction builder, l
 
 ## Practical Rule
 
-Use Black Relay to make public information readable and source-aware.
+Use Black Relay to make public information readable while keeping source labels visible.
 
 Use direct Frontier and Sui tooling to prove live state, build transactions and protect assets.

@@ -1,55 +1,56 @@
 ---
-title: Black Relay Docs
-description: EVE Frontier builder guidance, Registry provenance notes and public API reference.
+title: Frontier Development Notes
+description: Practical notes for building around EVE Frontier public data, Sui reads, wallet identity, static client data and the Black Relay API.
 ---
 
-Black Relay Docs is a practical guide for EVE Frontier builders who need to understand public world data, Sui reads, wallet identity, smart assemblies, static-client evidence and source-aware tooling.
+Practical notes for building around EVE Frontier public data, Sui reads, wallet identity, static client data and the Black Relay API.
 
-The Black Relay API is one tool in that stack. It is useful when you need source-aware public read data but it is not a replacement for official contracts, EVE Vault, direct Sui reads, dApp Kit, local tests or pre-transaction validation.
+The Black Relay API is one tool in that stack. It is useful when you need source-labelled public read data; it is not a replacement for official contracts, EVE Vault, direct Sui reads, dApp Kit, local tests or pre-transaction validation.
 
-## Start With The Boundary
+## Start with the boundary
 
 Before choosing a tool, decide what kind of problem you are solving:
 
-Problem | Primary Tooling
+Problem | Primary tooling
 --- | ---
 Learn the world and object model. | Official docs, world contracts, Sui docs.
 Build or publish Move logic. | Builder scaffold, Sui CLI, world contracts.
 Connect a player wallet. | EVE Vault, dApp Kit, server-side nonce flow if needed.
 Inspect exact current object state. | Sui CLI, GraphQL, gRPC or SDK reads.
 Ask a player to sign. | Wallet/dApp flow with fresh object state.
-Show public names, systems, events or sources. | Black Relay API or Registry exports.
+Show public names, systems, events or sources. | Black Relay API, Registry explorer or Registry exports.
 Reproduce the canonical import pipeline. | `blackrelay/registry` tooling.
 
 If the next action can move assets, change infrastructure or spend gas, use direct sources and live reads. If the next action is display, exploration, lookup or provenance, a public read layer may be the right shortcut.
 
-## Builder Map
+## Builder map
 
 For Frontier development, these docs focus on boundaries that usually cost builders time:
 
-Problem | Where To Start
+Problem | Where to start
 --- | ---
-Setting up tools, wallets and dApp sessions | [Environment And Identity](frontier/environment-and-identity/)
-Planning a tool or dApp workflow | [Development Workflows](frontier/development-workflows/)
-Keeping IDs, names and objects straight | [Identifiers And Data Model](frontier/identifiers-data-model/)
-Understanding the world model | [World, Chain And Client](frontier/world-chain-client/)
-Handling world package upgrades | [World Upgrades](frontier/world-upgrades/)
-Inspecting objects and events directly | [Sui CLI And GraphQL](frontier/sui-cli-graphql/)
-Indexing public chain events | [Events And Indexing](frontier/events-and-indexing/)
+Setting up tools, wallets and dApp sessions | [Environment and identity](frontier/environment-and-identity/)
+Planning a tool or dApp workflow | [Development workflows](frontier/development-workflows/)
+Keeping IDs, names and objects straight | [Identifiers and data model](frontier/identifiers-data-model/)
+Understanding the world model | [World, chain and client](frontier/world-chain-client/)
+Handling world package upgrades | [World upgrades](frontier/world-upgrades/)
+Inspecting objects and events directly | [Sui CLI and GraphQL](frontier/sui-cli-graphql/)
+Indexing public chain events | [Events and indexing](frontier/events-and-indexing/)
 Building around smart assemblies | [Smart Assemblies](frontier/smart-assemblies/)
 Designing a programmable storage unit | [Programmable SSUs](frontier/programmable-ssus/)
-Working with routes, gates and systems | [Gates, Turrets And Routes](frontier/gates-turrets-routes/)
-Handling rift and location evidence | [Rifts And Locations](frontier/rifts-and-locations/)
-Understanding static-client data | [Static Client Data](frontier/static-client-data/)
-Finding the right upstream tool or endpoint | [Reference Links](frontier/reference-links/)
-Testing safely before live use | [Testing And Localnet](frontier/testing-localnet/)
+Working with routes, gates and systems | [Gates, turrets and routes](frontier/gates-turrets-routes/)
+Handling rift and location evidence | [Rifts and locations](frontier/rifts-and-locations/)
+Understanding static-client data | [Static client data](frontier/static-client-data/)
+Finding the right upstream tool or endpoint | [Reference links](frontier/reference-links/)
+Testing safely before live use | [Testing and localnet](frontier/testing-localnet/)
 Designing the frontend/server split | [dApp Architecture](frontier/dapp-architecture/)
-Running a tool after launch | [Deployment And Operations](frontier/deployment-operations/)
-Debugging environment or transaction errors | [Debugging And Help](frontier/debugging-and-help/)
-Reviewing extension safety | [Move Security Checklist](frontier/move-security-checklist/)
-Deciding when the public read layer helps | [Why Use Black Relay](why-use-black-relay/)
+Running a tool after launch | [Deployment and operations](frontier/deployment-operations/)
+Debugging environment or transaction errors | [Debugging and help](frontier/debugging-and-help/)
+Reviewing extension safety | [Move security checklist](frontier/move-security-checklist/)
+Tracking stale examples and patch drift | [Known stale assumptions](known-stale-assumptions/)
+Deciding when the public read layer helps | [Why use Black Relay](why-use-black-relay/)
 
-## Where Black Relay Fits
+## Where Black Relay fits
 
 Black Relay maintains a Registry pipeline that combines public Sui data, World API snapshots, static-client extraction and reviewed source evidence into export bundles. The public API serves those bundles from Cloudflare.
 
@@ -62,11 +63,15 @@ Use it for public read-side work:
 - export freshness checks
 - bulk public exports
 
-Do not use it as transaction authority. A dApp that signs, sponsors, deploys, mutates or spends should re-read live state through direct Frontier and Sui tooling.
+Black Relay indexes public or source-labelled data only. It does not publish private Discord intel, real-world identity claims, wallet secrets or unverifiable alt accusations.
 
-## API Reference
+Do not use it as transaction authority. A dApp that signs, sponsors, deploys, mutates or spends should re-read live state through direct Frontier and Sui tooling before asking a player to sign.
 
-If the API is the right tool for your use case, start with [API Quickstart](quickstart/).
+Frontier data can change after patches or cycle resets. Check source, cycle and timestamp before relying on a record.
+
+## API reference
+
+If the API is the right tool for your use case, start with [API quickstart](quickstart/) or [Runnable examples](examples/).
 
 API base URL:
 ```text
@@ -86,24 +91,26 @@ Methods | `GET`, `HEAD`, `OPTIONS`
 
 The API does not create canonical records, index Sui directly, call the World API, sign transactions or mutate Registry state. Use the operations routes to check freshness and source gaps before treating data as complete.
 
-## Main Links
-- [Why Use Black Relay](why-use-black-relay/)
-- [Source Map](source-map/)
-- [Builder Orientation](frontier/builder-orientation/)
-- [Environment And Identity](frontier/environment-and-identity/)
-- [Development Workflows](frontier/development-workflows/)
-- [Identifiers And Data Model](frontier/identifiers-data-model/)
-- [Sui CLI And GraphQL](frontier/sui-cli-graphql/)
-- [Testing And Localnet](frontier/testing-localnet/)
+## Main links
+- [Why use Black Relay](why-use-black-relay/)
+- [Source map](source-map/)
+- [Known stale assumptions](known-stale-assumptions/)
+- [Builder orientation](frontier/builder-orientation/)
+- [Environment and identity](frontier/environment-and-identity/)
+- [Development workflows](frontier/development-workflows/)
+- [Identifiers and data model](frontier/identifiers-data-model/)
+- [Sui CLI and GraphQL](frontier/sui-cli-graphql/)
+- [Testing and localnet](frontier/testing-localnet/)
 - [dApp Architecture](frontier/dapp-architecture/)
-- [Deployment And Operations](frontier/deployment-operations/)
-- [Reference Links](frontier/reference-links/)
-- [Debugging And Help](frontier/debugging-and-help/)
-- [Move Security Checklist](frontier/move-security-checklist/)
-- [API Quickstart](quickstart/)
+- [Deployment and operations](frontier/deployment-operations/)
+- [Reference links](frontier/reference-links/)
+- [Debugging and help](frontier/debugging-and-help/)
+- [Move security checklist](frontier/move-security-checklist/)
+- [API quickstart](quickstart/)
+- [Runnable examples](examples/)
 - [Responses](responses/)
 - [Routes](routes/)
-- [Current Collections](collections/)
+- [Current collections](collections/)
 - [Provenance](provenance/)
-- [Events And Killmails](events-killmails/)
-- [Operations And Exports](operations-exports/)
+- [Events and killmails](events-killmails/)
+- [Operations and exports](operations-exports/)

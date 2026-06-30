@@ -1,0 +1,172 @@
+---
+title: Runnable examples
+description: Small curl, TypeScript and Python examples for reading Black Relay API records without hiding source or freshness context.
+---
+
+These examples treat the Black Relay API as a public read layer. They are useful for display, lookup and exploration.
+
+Do not use these examples as transaction authority. Before signing, sponsoring, deploying or mutating anything, re-read live state through direct Frontier and Sui tooling.
+
+## curl: readiness and freshness
+
+Check whether the API is ready and then inspect source freshness:
+```sh
+curl "https://api.blackrelay.network/v1/ready"
+curl "https://api.blackrelay.network/v1/ops/freshness"
+```
+
+Windows:
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/ready"
+Invoke-RestMethod "https://api.blackrelay.network/v1/ops/freshness"
+```
+
+If a source is stale for your use case, show that in the UI or read the underlying source directly.
+
+## curl: search with source context
+```sh
+curl "https://api.blackrelay.network/v1/search?q=gate&environment=stillness&cycles=current&limit=10"
+```
+
+Windows:
+```powershell
+Invoke-RestMethod "https://api.blackrelay.network/v1/search?q=gate&environment=stillness&cycles=current&limit=10"
+```
+
+For display, prefer `displayName` when present, keep the stable `id` copyable and show source/confidence fields when the response includes them.
+
+## TypeScript: list systems
+```ts
+type ApiEnvelope<T> = {
+  data: T;
+  meta?: {
+    registry?: string;
+    apiVersion?: string;
+  };
+  nextCursor?: string;
+};
+
+type RegistryRecord = {
+  id?: string;
+  displayName?: string;
+  name?: string;
+  confidence?: string;
+  sourceKind?: string;
+  updatedAt?: string;
+  [key: string]: unknown;
+};
+
+async function getJSON<T>(path: string): Promise<ApiEnvelope<T>> {
+  const response = await fetch(`https://api.blackrelay.network${path}`, {
+    headers: { accept: "application/json" },
+  });
+  if (!response.ok) {
+    throw new Error(`Black Relay API returned ${response.status}`);
+  }
+  return (await response.json()) as ApiEnvelope<T>;
+}
+
+const systems = await getJSON<RegistryRecord[]>(
+  "/v1/current/systems?environment=stillness&cycles=current&limit=10",
+);
+
+for (const record of systems.data) {
+  console.log({
+    id: record.id,
+    name: record.displayName ?? record.name ?? record.id,
+    confidence: record.confidence ?? "not reported",
+    source: record.sourceKind ?? "not reported",
+    updatedAt: record.updatedAt ?? "not reported",
+  });
+}
+```
+
+## TypeScript: page safely
+
+Cursors are opaque. Store and pass them back unchanged:
+```ts
+let cursor: string | undefined;
+
+for (let page = 0; page < 3; page += 1) {
+  const query = new URLSearchParams({
+    environment: "stillness",
+    cycles: "current",
+    limit: "50",
+  });
+  if (cursor) {
+    query.set("cursor", cursor);
+  }
+
+  const body = await getJSON<RegistryRecord[]>(`/v1/entities?${query}`);
+  console.log(`page ${page + 1}:`, body.data.length);
+  cursor = body.nextCursor;
+  if (!cursor) {
+    break;
+  }
+}
+```
+
+Do not construct cursors yourself.
+
+## Python: read a type label
+```python
+from urllib.request import Request, urlopen
+import json
+
+def get_json(path: str) -> dict:
+    request = Request(
+        f"https://api.blackrelay.network{path}",
+        headers={"Accept": "application/json"},
+    )
+    with urlopen(request, timeout=10) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+body = get_json("/v1/types/3001")
+record = body.get("data", {})
+
+print({
+    "type_id": record.get("typeID") or record.get("typeId") or "3001",
+    "name": record.get("displayName") or record.get("name") or "unresolved",
+    "source": record.get("sourceKind") or "not reported",
+    "confidence": record.get("confidence") or "not reported",
+})
+```
+
+If a type is unresolved, keep the numeric ID visible. Guessing a label is worse than showing an unresolved ID.
+
+## Python: display freshness caveats
+```python
+freshness = get_json("/v1/ops/freshness").get("data", [])
+
+stale = [
+    row
+    for row in freshness
+    if row.get("stalenessStatus") not in (None, "live_indexed")
+]
+
+if stale:
+    print("Some sources may be stale:")
+    for row in stale[:5]:
+        print(
+            row.get("sourceKind", "unknown"),
+            row.get("environment", "unknown"),
+            row.get("stalenessStatus", "unknown"),
+            row.get("lastSuccessfulIngest", "not reported"),
+        )
+else:
+    print("No stale source rows reported by the freshness endpoint.")
+```
+
+Freshness output is operational context, not a guarantee that a record is safe for a write path.
+
+## Record display checklist
+
+For user-facing tools:
+
+1. Show the clean display name if present.
+2. Keep the stable ID copyable.
+3. Show source kind and confidence for important claims.
+4. Show updated/export time near operational data.
+5. Warn users when freshness is stale or not reported.
+6. Link to the API URL or Registry record where possible.
+7. Re-read live state before transaction construction.

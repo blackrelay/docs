@@ -1,5 +1,5 @@
 ---
-title: Source Map
+title: Source map
 description: How Black Relay separates on-chain, World API, static-client and reviewed public sources.
 ---
 
@@ -9,6 +9,12 @@ source evidence -> import -> normalised Registry records -> public exports -> AP
 ```
 
 The API serves the normalised records and keeps links back to sources where the export contains them.
+
+Black Relay indexes public or source-labelled data only. It does not publish private Discord intel, real-world identity claims, wallet secrets or unverifiable alt accusations.
+
+Black Relay is a public read layer, not transaction authority. Re-read live state through direct Frontier and Sui tooling before signing, sponsoring, deploying or mutating anything.
+
+Frontier data can change after patches or cycle resets. Check source, cycle and timestamp before relying on a record.
 
 ## Source Kinds
 
